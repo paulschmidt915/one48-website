@@ -10,6 +10,36 @@
   <link
     href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Space+Grotesk:wght@400;500;600;700&display=swap"
     rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            primary: "#EA580C",
+            secondary: "#2563EB",
+            "background-light": "#F9F9F7",
+            "background-dark": "#111827",
+            "surface-light": "#FFFFFF",
+            "surface-dark": "#1F2937",
+            "text-light": "#171717",
+            "text-dark": "#F3F4F6",
+            "neutral-light": "#E5E7EB",
+            "neutral-dark": "#374151",
+          },
+          fontFamily: {
+            display: ['"Space Grotesk"', 'sans-serif'],
+            body: ['"Inter"', 'sans-serif'],
+          },
+          backgroundImage: {
+            'gradient-glow-light': 'linear-gradient(135deg, rgba(37,99,235,0.1) 0%, rgba(234,88,12,0.1) 100%)',
+            'gradient-glow-dark': 'linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(234,88,12,0.15) 100%)',
+          }
+        },
+      },
+    };
+  </script>
   <style>
     .blur-orb-1 {
       filter: blur(80px);
@@ -23,12 +53,27 @@
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
     }
+
+    html {
+      scroll-behavior: smooth;
+    }
   </style>
+  <script type="importmap">
+  {
+    "imports": {
+      "react": "https://esm.sh/react@^19.2.3",
+      "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
+      "react/": "https://esm.sh/react@^19.2.3/",
+      "lucide-react": "https://esm.sh/lucide-react@^0.561.0"
+    }
+  }
+  </script>
 </head>
 
-<body>
+<body
+  class="bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark font-body transition-colors duration-300">
   <div id="root"></div>
-  <script type="module" src="/src/index.tsx"></script>
+  <script type="module" src="/index.tsx"></script>
 </body>
 
 </html>

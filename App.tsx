@@ -1,18 +1,13 @@
 import React from 'react';
-import Navbar from './Navbar';
-import Hero from './Hero';
-import Services from './Services';
-import Philosophy from './Philosophy';
-import Stats from './Stats';
-import CaseStudy from './CaseStudy';
-import Cta from './Cta';
-import Footer from './Footer';
+import Navbar from './components/Navbar';
+import Hero from './components/Hero';
+import Services from './components/Services';
+import Philosophy from './components/Philosophy';
+import Stats from './components/Stats';
+import CaseStudy from './components/CaseStudy';
+import Cta from './components/Cta';
+import Footer from './components/Footer';
 
-/**
- * App acts as the main Page component in Next.js terms.
- * Ideally, the Navbar and Footer would be in a layout.tsx,
- * while the sections would be in page.tsx.
- */
 export default function App() {
   return (
     <div className="relative min-h-screen overflow-hidden selection:bg-primary/20 selection:text-primary">
