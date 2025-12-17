@@ -11,10 +11,11 @@ const AboutMe: React.FC = () => {
             {/* Image Placeholder */}
             <div className="md:col-span-4 lg:col-span-4 relative">
               <div className="aspect-[4/5] rounded-2xl overflow-hidden bg-neutral-200 dark:bg-neutral-800 relative group">
-                {/* Placeholder graphic until real image is added */}
-                <div className="absolute inset-0 flex items-center justify-center text-neutral-400">
-                  <span className="text-sm uppercase tracking-widest">[Foto: Paul Schmidt]</span>
-                </div>
+                <img
+                  src="/profilepicture.png"
+                  alt="Paul Schmidt"
+                  className="w-full h-full object-cover"
+                />
                 {/* Overlay gradient */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
               </div>
