@@ -35,7 +35,7 @@ const Services: React.FC = () => {
 
         <div className="flex flex-col">
           {services.map((service) => (
-            <div 
+            <div
               key={service.id}
               className="group relative border-t border-neutral-light dark:border-neutral-dark py-12 md:py-16 hover:bg-neutral-50 dark:hover:bg-white/5 transition-colors duration-500 cursor-pointer"
             >
@@ -53,15 +53,15 @@ const Services: React.FC = () => {
                     </h3>
                     <ArrowUpRight className="w-8 h-8 md:w-12 md:h-12 text-text-light/20 dark:text-text-dark/20 group-hover:text-primary group-hover:translate-x-2 group-hover:-translate-y-2 transition-all duration-300" />
                   </div>
-                  
+
                   <div className="grid md:grid-cols-2 gap-8">
                     <p className="text-lg text-text-light/70 dark:text-text-dark/70 leading-relaxed">
                       {service.description}
                     </p>
                     <div className="flex flex-wrap content-start gap-2">
                       {service.tags.map((tag, idx) => (
-                        <span 
-                          key={idx} 
+                        <span
+                          key={idx}
                           className="px-4 py-2 rounded-full border border-neutral-light dark:border-neutral-dark text-sm font-medium text-text-light/60 dark:text-text-dark/60 bg-background-light dark:bg-background-dark group-hover:border-primary/30 transition-colors"
                         >
                           {tag}

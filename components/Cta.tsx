@@ -2,11 +2,11 @@ import React from 'react';
 
 const Cta: React.FC = () => {
   return (
-    <section className="py-24 px-4 relative overflow-hidden">
+    <section className="py-24 px-4 relative overflow-hidden" id="kontakt">
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-background-light to-transparent dark:from-background-dark opacity-50 z-0"></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary opacity-5 dark:opacity-10 rounded-full blur-3xl z-0"></div>
-      
+
       <div className="max-w-3xl mx-auto text-center relative z-10">
         <h2 className="font-display text-4xl sm:text-5xl font-bold mb-6 text-text-light dark:text-text-dark">
           Bereit für ein Workflow-Upgrade?

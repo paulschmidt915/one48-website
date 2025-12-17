@@ -23,12 +23,12 @@
     "noFallthroughCasesInSwitch": true,
     "paths": {
       "@/*": [
-        "./src/*"
+        "components/*"
       ]
     }
   },
   "include": [
-    "src"
+    "."
   ],
   "references": [
     {

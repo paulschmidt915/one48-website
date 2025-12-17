@@ -13,11 +13,11 @@ const Stats: React.FC = () => {
     <section className="py-20 bg-background-light dark:bg-background-dark relative z-10">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
-            <span className="text-xs font-medium text-primary tracking-widest uppercase">Das Marktpotenzial</span>
-            <h3 className="mt-2 text-2xl font-display font-semibold">Warum jetzt handeln?</h3>
-            <p className="text-sm text-text-light/50 dark:text-text-dark/50 mt-2 italic">
-              *Basierend auf aktuellen Studien führender Wirtschaftsinstitute (z.B. McKinsey, Goldman Sachs)
-            </p>
+          <span className="text-xs font-medium text-primary tracking-widest uppercase">Das Marktpotenzial</span>
+          <h3 className="mt-2 text-2xl font-display font-semibold">Warum jetzt handeln?</h3>
+          <p className="text-sm text-text-light/50 dark:text-text-dark/50 mt-2 italic">
+            *Basierend auf aktuellen Studien führender Wirtschaftsinstitute (z.B. McKinsey, Goldman Sachs)
+          </p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 text-center sm:divide-x divide-neutral-light dark:divide-neutral-dark">
           {stats.map((stat, index) => (

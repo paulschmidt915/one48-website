@@ -6,7 +6,7 @@ const Footer: React.FC = () => {
     <footer className="bg-surface-light dark:bg-surface-dark border-t border-neutral-light dark:border-neutral-dark pt-16 pb-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
-          
+
           <div className="col-span-1 md:col-span-1">
             <div className="flex items-center gap-2 mb-6">
               <div className="w-6 h-6 bg-gradient-to-br from-secondary to-primary rounded-md flex items-center justify-center text-white font-display font-bold text-xs">
@@ -45,9 +45,9 @@ const Footer: React.FC = () => {
               Neueste Einblicke zu AI und Change Management.
             </p>
             <form className="flex gap-2" onSubmit={(e) => e.preventDefault()}>
-              <input 
-                type="email" 
-                placeholder="E-Mail Adresse" 
+              <input
+                type="email"
+                placeholder="E-Mail Adresse"
                 className="w-full bg-background-light dark:bg-background-dark border border-neutral-light dark:border-neutral-dark rounded px-3 py-2 text-sm focus:outline-none focus:border-secondary transition-colors text-text-light dark:text-text-dark"
               />
               <button className="bg-secondary text-white px-3 py-2 rounded hover:bg-blue-600 transition-colors">

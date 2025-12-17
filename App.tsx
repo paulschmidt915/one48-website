@@ -1,10 +1,13 @@
 import React from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
+import DecisionNavigator from './components/DecisionNavigator';
 import Services from './components/Services';
-import Philosophy from './components/Philosophy';
-import Stats from './components/Stats';
+import ProofSnippets from './components/ProofSnippets';
+import Process from './components/Process';
 import CaseStudy from './components/CaseStudy';
+import AboutMe from './components/AboutMe';
+import FAQ from './components/FAQ';
 import Cta from './components/Cta';
 import Footer from './components/Footer';
 
@@ -21,10 +24,13 @@ export default function App() {
 
       <main>
         <Hero />
+        <DecisionNavigator />
         <Services />
-        <Philosophy />
-        <Stats />
+        <ProofSnippets />
+        <Process />
         <CaseStudy />
+        <AboutMe />
+        <FAQ />
         <Cta />
       </main>
 
