@@ -1,6 +1,10 @@
 import React from 'react';
 
-const Cta: React.FC = () => {
+interface CtaProps {
+  onNavigateContact: () => void;
+}
+
+const Cta: React.FC<CtaProps> = ({ onNavigateContact }) => {
   return (
     <section className="py-24 px-4 relative overflow-hidden" id="kontakt">
       {/* Background Decor */}
@@ -15,7 +19,10 @@ const Cta: React.FC = () => {
           Lassen Sie uns besprechen, wie GenAI Ihr operatives Ergebnis konkret beeinflussen kann. Kein Gerede, nur Strategie.
         </p>
         <div className="flex flex-col sm:flex-row justify-center gap-4">
-          <button className="px-8 py-4 bg-text-light dark:bg-white text-white dark:text-background-dark font-medium rounded-lg hover:shadow-xl transition-all hover:-translate-y-1">
+          <button
+            onClick={onNavigateContact}
+            className="px-8 py-4 bg-text-light dark:bg-white text-white dark:text-background-dark font-medium rounded-lg hover:shadow-xl transition-all hover:-translate-y-1"
+          >
             Erstgespräch vereinbaren
           </button>
         </div>

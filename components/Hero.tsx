@@ -1,7 +1,12 @@
+
 import React, { useEffect, useState } from 'react';
 import { ScreenShare, CheckCircle2, ChevronRight } from 'lucide-react';
 
-const Hero: React.FC = () => {
+interface HeroProps {
+  onNavigateContact: () => void;
+}
+
+const Hero: React.FC<HeroProps> = ({ onNavigateContact }) => {
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
@@ -29,7 +34,8 @@ const Hero: React.FC = () => {
         <div className="space-y-8 relative z-20">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-neutral-light dark:border-neutral-dark bg-surface-light/50 dark:bg-surface-dark/50 text-xs font-medium tracking-wider text-secondary">
             <span className="w-2 h-2 rounded-full bg-secondary animate-pulse"></span>
-            Umsetzungsberatung für AI, Automatisierung und Enablement
+            <span className="md:hidden">Umsetzungspartner für AI & Automatisierung</span>
+            <span className="hidden md:inline">Umsetzungspartner für AI, Automatisierung und Enablement</span>
           </div>
 
           <div>
@@ -48,7 +54,10 @@ const Hero: React.FC = () => {
 
           <div className="flex flex-col sm:flex-row flex-wrap gap-4 pt-4">
             {/* Primary CTA */}
-            <button className="px-6 py-4 bg-primary text-white font-medium rounded-lg hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-500/20 flex items-center justify-center gap-2 group">
+            <button
+              onClick={onNavigateContact}
+              className="px-6 py-4 bg-primary text-white font-medium rounded-lg hover:bg-orange-600 transition-all shadow-lg hover:shadow-orange-500/20 flex items-center justify-center gap-2 group"
+            >
               Erstgespräch vereinbaren
               <ScreenShare className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </button>

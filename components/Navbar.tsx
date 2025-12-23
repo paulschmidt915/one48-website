@@ -1,7 +1,13 @@
+
 import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
-const Navbar: React.FC = () => {
+interface NavbarProps {
+  onNavigate: (view: 'landing' | 'contact' | 'legal') => void;
+  currentView: 'landing' | 'contact' | 'legal';
+}
+
+const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentView }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   const menuItems = [
@@ -10,31 +16,37 @@ const Navbar: React.FC = () => {
     { label: 'Einblicke', href: '#einblicke' }
   ];
 
-  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleLinkClick = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
     e.preventDefault();
 
-    // Handle logo click to scroll to top
-    if (href === '#') {
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setIsOpen(false);
-      return;
+    if (currentView !== 'landing') {
+      onNavigate('landing');
+      // Delay scrolling slightly to allow rendering
+      setTimeout(() => {
+        const targetId = href.replace('#', '');
+        const element = document.getElementById(targetId);
+        if (element) {
+          const headerOffset = 100;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.scrollY - headerOffset;
+          window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+        }
+      }, 100);
+    } else {
+      if (href === '#') {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        const targetId = href.replace('#', '');
+        const element = document.getElementById(targetId);
+        if (element) {
+          const headerOffset = 100;
+          const elementPosition = element.getBoundingClientRect().top;
+          const offsetPosition = elementPosition + window.scrollY - headerOffset;
+          window.scrollTo({ top: offsetPosition, behavior: "smooth" });
+        }
+      }
     }
-
-    const targetId = href.replace('#', '');
-    const element = document.getElementById(targetId);
-
-    if (element) {
-      const headerOffset = 100; // Height of header + some padding
-      const elementPosition = element.getBoundingClientRect().top;
-      const offsetPosition = elementPosition + window.scrollY - headerOffset;
-
-      window.scrollTo({
-        top: offsetPosition,
-        behavior: "smooth"
-      });
-
-      setIsOpen(false);
-    }
+    setIsOpen(false);
   };
 
   return (
@@ -42,16 +54,15 @@ const Navbar: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-20">
           <div className="flex-shrink-0 flex items-center">
-            <a
-              href="#"
-              onClick={(e) => handleScroll(e, '#')}
-              className="flex items-center gap-2 cursor-pointer group"
+            <button
+              onClick={() => onNavigate('landing')}
+              className="flex items-center gap-2 cursor-pointer group bg-transparent border-0 p-0"
             >
               <span className="font-display font-bold text-3xl md:text-4xl tracking-tight">
-                <span className="text-secondary">one</span>
-                <span className="text-text-light dark:text-text-dark">48</span>
+                <span className="text-text-light dark:text-text-dark">one</span>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">48</span>
               </span>
-            </a>
+            </button>
           </div>
 
           <div className="hidden md:flex space-x-8 items-center">
@@ -59,19 +70,18 @@ const Navbar: React.FC = () => {
               <a
                 key={item.label}
                 href={item.href}
-                onClick={(e) => handleScroll(e, item.href)}
+                onClick={(e) => handleLinkClick(e, item.href)}
                 className="text-sm font-medium hover:text-secondary transition-colors cursor-pointer"
               >
                 {item.label}
               </a>
             ))}
-            <a
-              href="#kontakt"
-              onClick={(e) => handleScroll(e, '#kontakt')}
-              className="px-5 py-2.5 bg-text-light dark:bg-white text-white dark:text-background-dark font-medium rounded-full hover:shadow-lg transition-all text-sm cursor-pointer"
+            <button
+              onClick={() => onNavigate('contact')}
+              className={`px-5 py-2.5 font-medium rounded-full transition-all text-sm ${currentView === 'contact' ? 'bg-primary text-white shadow-lg' : 'bg-text-light dark:bg-white text-white dark:text-background-dark hover:shadow-lg'}`}
             >
               Kontakt aufnehmen
-            </a>
+            </button>
           </div>
 
           <div className="md:hidden flex items-center">
@@ -93,19 +103,18 @@ const Navbar: React.FC = () => {
               <a
                 key={item.label}
                 href={item.href}
-                onClick={(e) => handleScroll(e, item.href)}
+                onClick={(e) => handleLinkClick(e, item.href)}
                 className="block px-3 py-3 rounded-md text-base font-medium hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               >
                 {item.label}
               </a>
             ))}
-            <a
-              href="#kontakt"
-              onClick={(e) => handleScroll(e, '#kontakt')}
-              className="block mt-4 px-3 py-3 text-center bg-text-light text-white rounded-md font-medium cursor-pointer"
+            <button
+              onClick={() => { onNavigate('contact'); setIsOpen(false); }}
+              className="w-full block mt-4 px-3 py-3 text-center bg-text-light text-white rounded-md font-medium"
             >
               Kontakt aufnehmen
-            </a>
+            </button>
           </div>
         </div>
       )}
