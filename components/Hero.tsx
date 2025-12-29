@@ -1,6 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { ScreenShare, CheckCircle2, ChevronRight } from 'lucide-react';
+import { ScreenShare } from 'lucide-react';
 
 interface HeroProps {
   onNavigateContact: () => void;

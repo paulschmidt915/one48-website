@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
 import DecisionNavigator from './components/DecisionNavigator';
@@ -12,15 +12,30 @@ import Cta from './components/Cta';
 import Footer from './components/Footer';
 import ContactPage from './components/ContactPage';
 import LegalPage from './components/LegalPage';
+import PrivateArea from './components/PrivateArea';
 
-type View = 'landing' | 'contact' | 'legal';
+type View = 'landing' | 'contact' | 'legal' | 'private';
 
 export default function App() {
-  const [view, setView] = useState<View>('landing');
+  const [view, setView] = useState<View>(() => {
+    const path = window.location.pathname;
+    // Check if URL ends with /privat (ignoring trailing slash)
+    if (path === '/privat' || path === '/privat/') {
+      return 'private';
+    }
+    return 'landing';
+  });
 
   // Scroll to top when view changes
+  // Scroll to top when view changes and handle minimal URL sync
   useEffect(() => {
     window.scrollTo(0, 0);
+
+    // Update URL if leaving private area, but don't force pushState on every nav to avoid history clutter 
+    // unless we want full SPA routing. For now, just ensuring proper entry to private.
+    if (view !== 'private' && window.location.pathname.includes('/privat')) {
+      window.history.pushState(null, '', '/');
+    }
   }, [view]);
 
   const navigateTo = (newView: View) => {
@@ -55,6 +70,9 @@ export default function App() {
         )}
         {view === 'legal' && (
           <LegalPage onBack={() => navigateTo('landing')} />
+        )}
+        {view === 'private' && (
+          <PrivateArea />
         )}
       </main>
 

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Linkedin, GraduationCap, Briefcase, Users, Rocket, Mail, Download, FileText } from 'lucide-react';
+import { Linkedin, GraduationCap, Briefcase, Users, Rocket, Mail, FileText } from 'lucide-react';
 
 interface AboutMeProps {
   onNavigateContact: () => void;
@@ -87,8 +87,8 @@ const AboutMe: React.FC<AboutMeProps> = ({ onNavigateContact }) => {
                   <div key={idx} className="relative group pl-10">
                     <div
                       className={`absolute -left-[14px] top-1 flex items-center justify-center w-8 h-8 rounded-full border-[3px] shadow-sm z-10 transition-all duration-300 group-hover:scale-110 ${idx === careerPath.length - 1
-                          ? "bg-primary border-primary"
-                          : "bg-white dark:bg-surface-dark border-neutral-200 dark:border-neutral-700"
+                        ? "bg-primary border-primary"
+                        : "bg-white dark:bg-surface-dark border-neutral-200 dark:border-neutral-700"
                         }`}
                     >
                       {item.icon}

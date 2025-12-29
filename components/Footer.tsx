@@ -1,9 +1,9 @@
 
 import React from 'react';
-import { Linkedin } from 'lucide-react';
+import { Linkedin, Lock } from 'lucide-react';
 
 interface FooterProps {
-  onNavigate: (view: 'landing' | 'contact' | 'legal') => void;
+  onNavigate: (view: 'landing' | 'contact' | 'legal' | 'private') => void;
 }
 
 const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
@@ -72,6 +72,13 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             >
               <Linkedin className="w-5 h-5" />
             </a>
+            <button
+              onClick={() => onNavigate('private')}
+              className="text-text-light/40 dark:text-text-dark/40 hover:text-primary transition-colors bg-transparent border-0 cursor-pointer"
+              aria-label="Private Area"
+            >
+              <Lock className="w-5 h-5" />
+            </button>
           </div>
 
         </div>
