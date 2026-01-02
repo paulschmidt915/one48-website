@@ -14,8 +14,8 @@ import ContactPage from './components/ContactPage';
 import LegalPage from './components/LegalPage';
 import PrivateArea from './components/PrivateArea';
 import One48Planner from './components/One48Planner';
+import { getRedirectResult, onAuthStateChanged, GoogleAuthProvider } from 'firebase/auth';
 import { auth } from './firebase';
-import { onAuthStateChanged, getRedirectResult, User } from 'firebase/auth';
 
 type View = 'landing' | 'contact' | 'legal' | 'private' | 'planner';
 
@@ -29,52 +29,56 @@ export default function App() {
     return 'landing';
   });
 
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    // 1. Handle Redirect Result (for mobile flow)
-    const handleRedirect = async () => {
-      try {
-        const result = await getRedirectResult(auth);
-        if (result) {
-          console.log("Redirect login success:", result.user.uid);
-          // If we just came back from a redirect, we want to go back to the planner
-          setView('planner');
-          // The access token for GAPI will be handled by One48Planner using getRedirectResult again or similar
-        }
-      } catch (error) {
-        console.error("Redirect Login Error:", error);
-      }
-    };
-    handleRedirect();
-
-    // 2. Auth state observer
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("App Auth Observer:", user ? `Logged in as ${user.uid}` : "Logged out");
-      setFirebaseUser(user);
-
-      // If user is logged in and we are on landing, maybe auto-navigate?
-      // User said: "leitet ihn dann von der Landingpage zur App-Ansicht weiter"
-      // But we should probably only do this if they actually have the private area session too
-      const hasPrivateAuth = sessionStorage.getItem('one48-auth') === 'true';
-      if (user && view === 'landing' && hasPrivateAuth) {
-        setView('planner');
-      }
-    });
-
-    return () => unsubscribe();
-  }, [view]);
-
-  // Scroll to top when view changes
   // Scroll to top when view changes and handle minimal URL sync
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Update URL if leaving private area, but don't force pushState on every nav to avoid history clutter 
-    // unless we want full SPA routing. For now, just ensuring proper entry to private.
-    if (view !== 'private' && window.location.pathname.includes('/privat')) {
+    if (view !== 'private' && view !== 'planner' && window.location.pathname.includes('/privat')) {
       window.history.pushState(null, '', '/');
     }
+  }, [view]);
+
+  // Firebase Auth & Redirect Handling
+  useEffect(() => {
+    // 1. Handle Redirect Result (especially for mobile)
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("Successfully returned from Redirect Login!");
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const accessToken = credential?.accessToken;
+          if (accessToken) {
+            sessionStorage.setItem('one48-gapi-token', accessToken);
+          }
+          // Store auth state for PrivateArea and jump to planner
+          sessionStorage.setItem('one48-auth', 'true');
+          setView('planner');
+        }
+      } catch (error) {
+        console.error("Redirect Login Error in App:", error);
+      }
+    };
+    handleRedirect();
+
+    // 2. Auth State Observer
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        console.log("User detected globally:", user.uid);
+        // If we are on landing, maybe the user wants to go to their planner
+        // But we only auto-redirect if we have the 'one48-auth' session or just came from redirect
+        // For now, let's follow the user's suggestion to redirect to planner if logged in and on landing
+        if (view === 'landing') {
+          // Check if they previously entered the password
+          const isPrivateAuthed = sessionStorage.getItem('one48-auth') === 'true';
+          if (isPrivateAuthed) {
+            setView('planner');
+          }
+        }
+      }
+    });
+
+    return () => unsubscribe();
   }, [view]);
 
   const navigateTo = (newView: View) => {
@@ -114,7 +118,7 @@ export default function App() {
           <PrivateArea onNavigate={navigateTo} />
         )}
         {view === 'planner' && (
-          <One48Planner onBack={() => navigateTo('private')} externalUser={firebaseUser} />
+          <One48Planner onBack={() => navigateTo('private')} />
         )}
       </main>
 

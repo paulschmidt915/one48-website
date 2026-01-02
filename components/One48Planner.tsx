@@ -271,20 +271,13 @@ const TaskCard = ({ task, category, isDraggable = false, onDragStart, onDragEnd,
 
 interface One48PlannerProps {
   onBack: () => void;
-  externalUser?: User | null;
 }
 
-const One48Planner: React.FC<One48PlannerProps> = ({ onBack, externalUser }) => {
+const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   // State
   const [currentDate] = useState(new Date());
   const [unassignedTasks, setUnassignedTasks] = useState<Task[]>([]);
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(externalUser || null);
-
-  useEffect(() => {
-    if (externalUser !== undefined) {
-      setFirebaseUser(externalUser);
-    }
-  }, [externalUser]);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
   const [schedule, setSchedule] = useState<ScheduledEvent[]>(INITIAL_SCHEDULE);
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
@@ -448,6 +441,17 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack, externalUser }) => 
     // 1. Handle Redirect Result (for mobile flow)
     const handleRedirect = async () => {
       try {
+        // First check sessionStorage for a token passed from App.tsx
+        const savedToken = sessionStorage.getItem('one48-gapi-token');
+        if (savedToken) {
+          if ((window as any).gapi?.client) {
+            (window as any).gapi.client.setToken({ access_token: savedToken });
+          } else {
+            pendingTokenRef.current = savedToken;
+          }
+          sessionStorage.removeItem('one48-gapi-token');
+        }
+
         const result = await getRedirectResult(auth);
         if (result) {
           const credential = GoogleAuthProvider.credentialFromResult(result);
@@ -467,15 +471,13 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack, externalUser }) => 
     };
     handleRedirect();
 
-    // 2. Auth state listener (only if not provided by prop)
-    if (externalUser === undefined) {
-      const unsubscribe = onAuthStateChanged(auth, (user) => {
-        console.log("One48Planner Internal Auth Listener:", user ? `Logged in as ${user.uid}` : "Logged out");
-        setFirebaseUser(user);
-      });
-      return () => unsubscribe();
-    }
-  }, [externalUser]);
+    // 2. Auth state listener
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Auth State Changed:", user ? `Logged in as ${user.uid}` : "Logged out");
+      setFirebaseUser(user);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // 3. Database Listeners (Todos & Routines)
   useEffect(() => {
