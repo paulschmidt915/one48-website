@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import DecisionNavigator from './components/DecisionNavigator';
+// import DecisionNavigator from './components/DecisionNavigator';
 import Services from './components/Services';
 import ProofSnippets from './components/ProofSnippets';
 import Process from './components/Process';
@@ -13,8 +13,9 @@ import Footer from './components/Footer';
 import ContactPage from './components/ContactPage';
 import LegalPage from './components/LegalPage';
 import PrivateArea from './components/PrivateArea';
+import One48Planner from './components/One48Planner';
 
-type View = 'landing' | 'contact' | 'legal' | 'private';
+type View = 'landing' | 'contact' | 'legal' | 'private' | 'planner';
 
 export default function App() {
   const [view, setView] = useState<View>(() => {
@@ -72,7 +73,10 @@ export default function App() {
           <LegalPage onBack={() => navigateTo('landing')} />
         )}
         {view === 'private' && (
-          <PrivateArea />
+          <PrivateArea onNavigate={navigateTo} />
+        )}
+        {view === 'planner' && (
+          <One48Planner onBack={() => navigateTo('private')} />
         )}
       </main>
 

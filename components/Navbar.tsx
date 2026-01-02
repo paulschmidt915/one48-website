@@ -3,8 +3,8 @@ import React, { useState } from 'react';
 import { Menu, X } from 'lucide-react';
 
 interface NavbarProps {
-  onNavigate: (view: 'landing' | 'contact' | 'legal' | 'private') => void;
-  currentView: 'landing' | 'contact' | 'legal' | 'private';
+  onNavigate: (view: 'landing' | 'contact' | 'legal' | 'private' | 'planner') => void;
+  currentView: 'landing' | 'contact' | 'legal' | 'private' | 'planner';
 }
 
 const Navbar: React.FC<NavbarProps> = ({ onNavigate, currentView }) => {

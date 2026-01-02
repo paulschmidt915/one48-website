@@ -3,7 +3,7 @@ import React from 'react';
 import { Linkedin, Lock } from 'lucide-react';
 
 interface FooterProps {
-  onNavigate: (view: 'landing' | 'contact' | 'legal' | 'private') => void;
+  onNavigate: (view: 'landing' | 'contact' | 'legal' | 'private' | 'planner') => void;
 }
 
 const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
