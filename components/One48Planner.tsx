@@ -706,13 +706,20 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   };
 
   // 1. Download: GCal -> Planner
-  const handleSyncFromGoogle = async () => {
+  const handleSyncFromGoogle = async (isManual = false) => {
     if (!isGapiInitialized) return;
 
     // Check if we need to login (either no Firebase user OR no GAPI token)
-    if (!firebaseUser || !(window as any).gapi.client.getToken()) {
-      const success = await performGoogleLogin();
-      if (!success) return;
+    const token = (window as any).gapi?.client?.getToken();
+    if (!firebaseUser || !token) {
+      if (isManual) {
+        console.log("Token fehlt, starte manuellen Login...");
+        const success = await performGoogleLogin();
+        if (!success) return;
+      } else {
+        console.log("Synchronisierung übersprungen: Kein Token vorhanden (Auto-Sync).");
+        return;
+      }
     }
 
     setIsSyncing(true);
@@ -789,12 +796,18 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     action();
   };
 
+
   // 2. Upload: Planner -> GCal
   const handleSyncToGoogle = async (isSilent = false) => {
     if (!isGapiInitialized) return;
 
     // Ensure auth
-    if (!firebaseUser || !(window as any).gapi.client.getToken()) {
+    const token = (window as any).gapi?.client?.getToken();
+    if (!firebaseUser || !token) {
+      if (isSilent) {
+        console.log("Auto-Upload übersprungen: Kein Token vorhanden.");
+        return;
+      }
       const success = await performGoogleLogin();
       if (!success) return;
     }
@@ -1372,7 +1385,7 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
 
             <div className="flex items-center gap-1">
               <button
-                onClick={handleSyncFromGoogle}
+                onClick={() => handleSyncFromGoogle(true)}
                 disabled={!isGapiInitialized || isSyncing}
                 className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white dark:hover:bg-neutral-800 text-neutral-500 hover:text-primary transition-all disabled:opacity-50"
                 title="Sync from Google"

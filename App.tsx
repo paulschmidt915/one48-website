@@ -28,30 +28,39 @@ export default function App() {
     }
     return 'landing';
   });
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Scroll to top when view changes and handle minimal URL sync
   useEffect(() => {
-    window.scrollTo(0, 0);
+    let mounted = true;
 
-    if (view !== 'private' && view !== 'planner' && window.location.pathname.includes('/privat')) {
-      window.history.pushState(null, '', '/');
-    }
-  }, [view]);
+    // 1. Listen for auth state immediately
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (!mounted) return;
+      setAuthLoading(false);
+      if (user) {
+        const isPrivateAuthed = sessionStorage.getItem('one48-auth') === 'true';
+        setView(prev => {
+          if (prev === 'landing' || prev === 'private') {
+            return isPrivateAuthed ? 'planner' : 'private';
+          }
+          return prev;
+        });
+      } else {
+        setView(prev => (prev === 'private' || prev === 'planner') ? 'landing' : prev);
+      }
+    });
 
-  // Firebase Auth & Redirect Handling
-  useEffect(() => {
-    // 1. Handle Redirect Result (especially for mobile)
+    // 2. Handle Redirect Result (especially for mobile)
     const handleRedirect = async () => {
       try {
         const result = await getRedirectResult(auth);
-        if (result) {
+        if (result && mounted) {
           console.log("Successfully returned from Redirect Login!");
           const credential = GoogleAuthProvider.credentialFromResult(result);
           const accessToken = credential?.accessToken;
           if (accessToken) {
             sessionStorage.setItem('one48-gapi-token', accessToken);
           }
-          // Store auth state for PrivateArea and jump to planner
           sessionStorage.setItem('one48-auth', 'true');
           setView('planner');
         }
@@ -59,27 +68,33 @@ export default function App() {
         console.error("Redirect Login Error in App:", error);
       }
     };
+
     handleRedirect();
 
-    // 2. Auth State Observer
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        console.log("User detected globally:", user.uid);
-        // If we are on landing, maybe the user wants to go to their planner
-        // But we only auto-redirect if we have the 'one48-auth' session or just came from redirect
-        // For now, let's follow the user's suggestion to redirect to planner if logged in and on landing
-        if (view === 'landing') {
-          // Check if they previously entered the password
-          const isPrivateAuthed = sessionStorage.getItem('one48-auth') === 'true';
-          if (isPrivateAuthed) {
-            setView('planner');
-          }
-        }
-      }
-    });
+    return () => {
+      mounted = false;
+      unsubscribe();
+    };
+  }, []);
 
-    return () => unsubscribe();
+  // Scroll to top when view changes and handle minimal URL sync
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    if (view !== 'private' && view !== 'planner' && window.location.pathname.includes('/privat')) {
+      window.history.pushState(null, '', '/');
+    }
   }, [view]);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-background-dark">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+          <p className="text-sm font-medium text-neutral-500 animate-pulse">Lade App...</p>
+        </div>
+      </div>
+    );
+  }
 
   const navigateTo = (newView: View) => {
     setView(newView);
