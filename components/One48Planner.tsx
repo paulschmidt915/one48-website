@@ -6,7 +6,7 @@ import {
   Clock, Trash2, Check, Download, UploadCloud, Loader2, LogOut, CalendarCheck
 } from 'lucide-react';
 
-import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { ref, onValue, set, push, remove, update } from 'firebase/database';
 import { auth, db, firebaseConfig } from '../firebase';
 import { processAiRequest } from '../services/gemini';
@@ -318,6 +318,7 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   // Google API State
   const [isGapiInitialized, setIsGapiInitialized] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const pendingTokenRef = useRef<string | null>(null);
 
   // Ref for the grid container
   const gridRef = useRef<HTMLDivElement>(null);
@@ -399,6 +400,12 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           // Load Calendar API v3 directly
           await (window as any).gapi.client.load('calendar', 'v3');
 
+          // If we already have a user (e.g. from redirect or session restore), try to ensure GAPI has token
+          if (pendingTokenRef.current) {
+            (window as any).gapi.client.setToken({ access_token: pendingTokenRef.current });
+            pendingTokenRef.current = null;
+          }
+
           setIsGapiInitialized(true);
         });
       };
@@ -429,8 +436,31 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     return () => clearInterval(autoSyncTimer);
   }, [hasUnsavedChanges, isGapiInitialized, firebaseUser, isSyncing]);
 
-  // 2. Firebase Auth Listener
+  // 2. Firebase Auth Listener & Redirect Handling
   useEffect(() => {
+    // 1. Handle Redirect Result (for mobile flow)
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          const credential = GoogleAuthProvider.credentialFromResult(result);
+          const accessToken = credential?.accessToken;
+          if (accessToken) {
+            if ((window as any).gapi?.client) {
+              (window as any).gapi.client.setToken({ access_token: accessToken });
+            } else {
+              pendingTokenRef.current = accessToken;
+            }
+          }
+          setFirebaseUser(result.user);
+        }
+      } catch (error) {
+        console.error("Redirect Login Error:", error);
+      }
+    };
+    handleRedirect();
+
+    // 2. Auth state listener
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log("Auth State Changed:", user ? `Logged in as ${user.uid}` : "Logged out");
       setFirebaseUser(user);
@@ -500,18 +530,26 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       const provider = new GoogleAuthProvider();
       provider.addScope(SCOPES);
 
-      const result = await signInWithPopup(auth, provider);
+      const isMobile = window.innerWidth < 1024 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
-      // This gives you a Google Access Token.
-      const credential = GoogleAuthProvider.credentialFromResult(result);
-      const accessToken = credential?.accessToken;
+      if (isMobile) {
+        // Redirect logic for mobile
+        await signInWithRedirect(auth, provider);
+        return false; // Result will be handled in useEffect on redirect back
+      } else {
+        // Popup logic for desktop
+        const result = await signInWithPopup(auth, provider);
 
-      if (accessToken) {
-        (window as any).gapi.client.setToken({ access_token: accessToken });
+        const credential = GoogleAuthProvider.credentialFromResult(result);
+        const accessToken = credential?.accessToken;
+
+        if (accessToken) {
+          (window as any).gapi.client.setToken({ access_token: accessToken });
+        }
+
+        setFirebaseUser(result.user);
+        return true;
       }
-
-      setFirebaseUser(result.user);
-      return true;
     } catch (error: any) {
       console.error("Google Login Error:", error);
       if (error.code === 'auth/operation-not-allowed') {
