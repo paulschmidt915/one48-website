@@ -14,6 +14,8 @@ import ContactPage from './components/ContactPage';
 import LegalPage from './components/LegalPage';
 import PrivateArea from './components/PrivateArea';
 import One48Planner from './components/One48Planner';
+import { auth } from './firebase';
+import { onAuthStateChanged, getRedirectResult, User } from 'firebase/auth';
 
 type View = 'landing' | 'contact' | 'legal' | 'private' | 'planner';
 
@@ -26,6 +28,42 @@ export default function App() {
     }
     return 'landing';
   });
+
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    // 1. Handle Redirect Result (for mobile flow)
+    const handleRedirect = async () => {
+      try {
+        const result = await getRedirectResult(auth);
+        if (result) {
+          console.log("Redirect login success:", result.user.uid);
+          // If we just came back from a redirect, we want to go back to the planner
+          setView('planner');
+          // The access token for GAPI will be handled by One48Planner using getRedirectResult again or similar
+        }
+      } catch (error) {
+        console.error("Redirect Login Error:", error);
+      }
+    };
+    handleRedirect();
+
+    // 2. Auth state observer
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("App Auth Observer:", user ? `Logged in as ${user.uid}` : "Logged out");
+      setFirebaseUser(user);
+
+      // If user is logged in and we are on landing, maybe auto-navigate?
+      // User said: "leitet ihn dann von der Landingpage zur App-Ansicht weiter"
+      // But we should probably only do this if they actually have the private area session too
+      const hasPrivateAuth = sessionStorage.getItem('one48-auth') === 'true';
+      if (user && view === 'landing' && hasPrivateAuth) {
+        setView('planner');
+      }
+    });
+
+    return () => unsubscribe();
+  }, [view]);
 
   // Scroll to top when view changes
   // Scroll to top when view changes and handle minimal URL sync
@@ -76,7 +114,7 @@ export default function App() {
           <PrivateArea onNavigate={navigateTo} />
         )}
         {view === 'planner' && (
-          <One48Planner onBack={() => navigateTo('private')} />
+          <One48Planner onBack={() => navigateTo('private')} externalUser={firebaseUser} />
         )}
       </main>
 

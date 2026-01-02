@@ -271,13 +271,20 @@ const TaskCard = ({ task, category, isDraggable = false, onDragStart, onDragEnd,
 
 interface One48PlannerProps {
   onBack: () => void;
+  externalUser?: User | null;
 }
 
-const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
+const One48Planner: React.FC<One48PlannerProps> = ({ onBack, externalUser }) => {
   // State
   const [currentDate] = useState(new Date());
   const [unassignedTasks, setUnassignedTasks] = useState<Task[]>([]);
-  const [firebaseUser, setFirebaseUser] = useState<User | null>(null);
+  const [firebaseUser, setFirebaseUser] = useState<User | null>(externalUser || null);
+
+  useEffect(() => {
+    if (externalUser !== undefined) {
+      setFirebaseUser(externalUser);
+    }
+  }, [externalUser]);
   const [schedule, setSchedule] = useState<ScheduledEvent[]>(INITIAL_SCHEDULE);
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
@@ -460,13 +467,15 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     };
     handleRedirect();
 
-    // 2. Auth state listener
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      console.log("Auth State Changed:", user ? `Logged in as ${user.uid}` : "Logged out");
-      setFirebaseUser(user);
-    });
-    return () => unsubscribe();
-  }, []);
+    // 2. Auth state listener (only if not provided by prop)
+    if (externalUser === undefined) {
+      const unsubscribe = onAuthStateChanged(auth, (user) => {
+        console.log("One48Planner Internal Auth Listener:", user ? `Logged in as ${user.uid}` : "Logged out");
+        setFirebaseUser(user);
+      });
+      return () => unsubscribe();
+    }
+  }, [externalUser]);
 
   // 3. Database Listeners (Todos & Routines)
   useEffect(() => {
