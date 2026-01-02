@@ -20,9 +20,11 @@ type View = 'landing' | 'contact' | 'legal' | 'private' | 'planner';
 export default function App() {
   const [view, setView] = useState<View>(() => {
     const path = window.location.pathname;
-    // Check if URL ends with /privat (ignoring trailing slash)
     if (path === '/privat' || path === '/privat/') {
       return 'private';
+    }
+    if (path === '/planner' || path === '/planner/') {
+      return 'planner';
     }
     return 'landing';
   });
@@ -32,9 +34,12 @@ export default function App() {
   useEffect(() => {
     window.scrollTo(0, 0);
 
-    // Update URL if leaving private area, but don't force pushState on every nav to avoid history clutter 
-    // unless we want full SPA routing. For now, just ensuring proper entry to private.
-    if (view !== 'private' && window.location.pathname.includes('/privat')) {
+    const path = window.location.pathname;
+    if (view === 'private' && path !== '/privat') {
+      window.history.pushState(null, '', '/privat');
+    } else if (view === 'planner' && path !== '/planner') {
+      window.history.pushState(null, '', '/planner');
+    } else if (view === 'landing' && path !== '/') {
       window.history.pushState(null, '', '/');
     }
   }, [view]);
