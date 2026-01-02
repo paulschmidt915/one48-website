@@ -1,6 +1,6 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || "";
+const API_KEY = import.meta.env.VITE_GEMINI_API_KEY || (typeof process !== 'undefined' ? process.env.GEMINI_API_KEY : "") || "";
 const genAI = new GoogleGenerativeAI(API_KEY);
 
 const SYSTEM_PROMPT = `
@@ -44,34 +44,42 @@ Beispiel-Antwort:
 ]
 `;
 
-export async function processAiRequest(userPrompt: string, currentSchedule: any[], weekContext?: any) {
+export async function processAiRequest(
+    userPrompt: string,
+    currentSchedule: any[],
+    weekContext?: any,
+    audioData?: { inlineData: { data: string, mimeType: string } }, // Optional Audio
+    aiRules: string[] = []
+) {
     if (!API_KEY) {
-        throw new Error("Gemini API Key is missing. Please set VITE_GEMINI_API_KEY.");
+        throw new Error("Gemini API Key is missing.");
     }
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const fullPrompt = `
+    const textPart = `
 SYSTEM_PROMPT: ${SYSTEM_PROMPT}
-
-AKTUELLER ZEITPLAN:
-${JSON.stringify(currentSchedule, null, 2)}
-
-WOCHEN-KONTEXT:
-${weekContext ? JSON.stringify(weekContext, null, 2) : "Nicht verfügbar"}
-
-BENUTZERANFRAGE:
-${userPrompt}
-
+AKTUELLER ZEITPLAN: ${JSON.stringify(currentSchedule)}
+WOCHEN-KONTEXT: ${weekContext ? JSON.stringify(weekContext) : "Nicht verfügbar"}
+AI REGELN (BEACHTE DIESE UNBEDINGT): ${aiRules.length > 0 ? aiRules.join("; ") : "Keine speziellen Regeln"}
+BENUTZERANFRAGE: ${userPrompt || "Siehe Audio-Eingabe"}
 ANTWORT (NUR JSON):
 `;
 
+    // Wir erstellen ein Array aus Parts für Gemini
+    const promptParts: any[] = [textPart];
+
+    // Falls Audio vorhanden ist, fügen wir es als Part hinzu
+    if (audioData) {
+        promptParts.push(audioData);
+    }
+
     try {
-        const result = await model.generateContent(fullPrompt);
+        // generateContent akzeptiert ein Array aus Text und Medien
+        const result = await model.generateContent(promptParts);
         const response = await result.response;
         const text = response.text();
 
-        // Clean potential markdown blocks
         const jsonString = text.replace(/```json|```/g, "").trim();
         return JSON.parse(jsonString);
     } catch (error) {

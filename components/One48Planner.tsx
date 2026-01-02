@@ -1,15 +1,16 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useLayoutEffect, useRef } from 'react';
 import {
-  ArrowLeft, Settings,
-  Plus, X, MessageSquare,
-  Clock, Trash2, Check, Download, UploadCloud, Loader2, LogOut, CalendarCheck
+  ArrowLeft, Settings, Plus, X, MessageSquare,
+  Clock, Trash2, Check, Download, UploadCloud, Loader2, LogOut, CalendarCheck, FileText,
+  Bold, Italic, Underline, List, ListOrdered, Mic
 } from 'lucide-react';
 
 import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { ref, onValue, set, push, remove, update } from 'firebase/database';
 import { auth, db, firebaseConfig } from '../firebase';
 import { processAiRequest } from '../services/gemini';
+import { recordAudio } from '../services/audiohelper';
 
 // --- Google API Config ---
 
@@ -32,6 +33,7 @@ type Task = {
   categoryId: string;
   durationMins: number;
   subtitle?: string;
+  notes?: string;
 };
 
 type ScheduledEvent = Task & {
@@ -70,15 +72,9 @@ const INITIAL_CATEGORIES: Category[] = [
 
 
 
-const INITIAL_SCHEDULE: ScheduledEvent[] = [
-  { id: 's1', title: 'Weekly Sync', categoryId: 'work', durationMins: 90, dayIndex: 1, timeSlot: '09:00' },
-  { id: 's2', title: 'Morning Run', categoryId: 'workout', durationMins: 45, dayIndex: 3, timeSlot: '08:00' },
-];
+const INITIAL_SCHEDULE: ScheduledEvent[] = [];
 
-const INITIAL_RULES: Rule[] = [
-  { id: 'r1', text: 'Keine Meetings vor 10:00 Uhr.' },
-  { id: 'r2', text: 'Freitags ab 13:00 Uhr Fokuszeit.' },
-];
+const INITIAL_RULES: Rule[] = [];
 
 // Config for the calendar grid
 const START_HOUR = 0; // 00:00
@@ -217,6 +213,7 @@ const TaskCard = ({ task, category, isDraggable = false, onDragStart, onDragEnd,
       >
         <h4 className="font-bold text-text-light dark:text-text-dark pointer-events-none leading-tight break-words">
           {task.title}
+          {task.notes && <FileText className="inline-block w-2.5 h-2.5 ml-1 opacity-50" />}
         </h4>
 
         {/* Resize Handle */}
@@ -261,6 +258,7 @@ const TaskCard = ({ task, category, isDraggable = false, onDragStart, onDragEnd,
           <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider ${badgeStyle}`}>
             {category?.name || 'Unassigned'}
           </span>
+          {task.notes && <FileText className="w-3 h-3 ml-2 text-neutral-400" />}
         </div>
       </div>
     </div>
@@ -282,7 +280,7 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   const [categories] = useState<Category[]>(INITIAL_CATEGORIES);
   const [rules, setRules] = useState<Rule[]>(INITIAL_RULES);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [viewMode, setViewMode] = useState<'day' | '3days' | 'week' | 'list'>('week');
+  const [viewMode, setViewMode] = useState<'day' | '3days' | 'week' | 'list'>('3days');
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -293,6 +291,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     // Initial mobile check for viewMode
     if (window.innerWidth < 1024) {
       setViewMode('day');
+    } else {
+      setViewMode('3days');
     }
 
     return () => clearInterval(timer);
@@ -321,12 +321,14 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
 
   // Ref for the grid container
   const gridRef = useRef<HTMLDivElement>(null);
+  const editorRef = useRef<HTMLDivElement>(null);
   // AI Assistant State
   const [aiInput, setAiInput] = useState('');
   const [aiMessages, setAiMessages] = useState<{ role: 'ai' | 'user', content: string }[]>([
     { role: 'ai', content: 'Hallo! Ich bin dein One48 Planner Assistant. Wie kann ich dir heute mit deinem Kalender helfen?' }
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
   const [draggedItem, setDraggedItem] = useState<{ id: string; type: 'task' | 'event'; durationMins: number; categoryId: string; title: string } | null>(null);
   const [dragPreview, setDragPreview] = useState<{ dayIndex: number; timeSlot: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -337,6 +339,18 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 150)}px`;
     }
   }, [aiInput]);
+
+  // Sync editor content with state ONLY when state changes from outside or modal opens
+  // This prevents the cursor from jumping to the beginning on every keystroke
+  useLayoutEffect(() => {
+    if (isEditModalOpen && editorRef.current && editingEvent) {
+      const currentHTML = editorRef.current.innerHTML;
+      const targetHTML = editingEvent.notes || '';
+      if (currentHTML !== targetHTML) {
+        editorRef.current.innerHTML = targetHTML;
+      }
+    }
+  }, [editingEvent?.notes, isEditModalOpen]);
 
   // --- Derived State ---
   const startOfWeek = getStartOfWeek(currentDate);
@@ -458,7 +472,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           id: key,
           title: data[key].name || "No Title",
           categoryId: (data[key].category || 'work').toLowerCase(), // Force lowercase to match state
-          durationMins: Number(data[key].duration || 60)
+          durationMins: Number(data[key].duration || 60),
+          notes: data[key].notes || ""
         }));
         setUnassignedTasks(loadedTasks);
       } else {
@@ -487,10 +502,28 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       console.error("DB Error: Routines listener failed", error);
     });
 
+    const rulesRef = ref(db, `airules/${uid}`);
+    const unsubscribeRules = onValue(rulesRef, (snapshot) => {
+      const data = snapshot.val();
+      console.log("DB Update: Rules snapshot received", data ? Object.keys(data).length : 0, "items");
+      if (data) {
+        const loadedRules: Rule[] = Object.keys(data).map(key => ({
+          id: key,
+          text: data[key].text || ""
+        }));
+        setRules(loadedRules);
+      } else {
+        setRules([]);
+      }
+    }, (error) => {
+      console.error("DB Error: Rules listener failed", error);
+    });
+
     return () => {
       console.log("Cleaning up DB listeners for UID:", uid);
       unsubscribeTodos();
       unsubscribeRoutines();
+      unsubscribeRules();
     };
   }, [firebaseUser]);
 
@@ -554,7 +587,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       await set(newTaskRef, {
         name: task.title,
         category: formatCategory(task.categoryId),
-        duration: Number(task.durationMins)
+        duration: Number(task.durationMins),
+        notes: task.notes || ""
       });
 
       // WICHTIG: Du musst die firebaseId in deinem lokalen Task-Objekt speichern,
@@ -579,7 +613,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       await update(taskRef, {
         name: task.title,
         category: formatCategory(task.categoryId),
-        duration: Number(task.durationMins)
+        duration: Number(task.durationMins),
+        notes: task.notes || ""
       });
     } catch (error) {
       console.error("Fehler beim Update (Regeln verletzt?):", error);
@@ -633,6 +668,29 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     if (!firebaseUser) return;
     const routineRef = ref(db, `routines/${firebaseUser.uid}/${id}`);
     await remove(routineRef);
+  };
+
+  // --- Rule Helpers ---
+
+  const addRuleToFirebase = async (text: string) => {
+    if (!firebaseUser || !text.trim()) return;
+    try {
+      const rulesRef = ref(db, `airules/${firebaseUser.uid}`);
+      const newRef = push(rulesRef);
+      await set(newRef, { text });
+    } catch (error) {
+      console.error("Error adding rule:", error);
+    }
+  };
+
+  const removeRuleFromFirebase = async (id: string) => {
+    if (!firebaseUser) return;
+    try {
+      const ruleRef = ref(db, `airules/${firebaseUser.uid}/${id}`);
+      await remove(ruleRef);
+    } catch (error) {
+      console.error("Error removing rule:", error);
+    }
   };
 
   const importWeeklyRoutines = async () => {
@@ -721,7 +779,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
               categoryId: categoryId,
               durationMins: durationMins,
               dayIndex: diffDays,
-              timeSlot: timeSlot
+              timeSlot: timeSlot,
+              notes: event.description || ""
             });
           }
         });
@@ -808,7 +867,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
               'dateTime': endDate.toISOString(),
               'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
             },
-            'colorId': colorId
+            'colorId': colorId,
+            'description': ev.notes || ""
           };
 
           insertBatch.add((window as any).gapi.client.calendar.events.insert({
@@ -1052,7 +1112,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         categoryId: categories[0].id,
         durationMins: 60,
         dayIndex: 0, // Default to Monday
-        timeSlot: '' // Empty means unassigned
+        timeSlot: '', // Empty means unassigned
+        notes: ''
       });
     }
     setIsEditModalOpen(true);
@@ -1085,7 +1146,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         categoryId: editingEvent.categoryId,
         durationMins: editingEvent.durationMins,
         dayIndex: editingEvent.dayIndex !== undefined ? editingEvent.dayIndex : 0,
-        timeSlot: editingEvent.timeSlot!
+        timeSlot: editingEvent.timeSlot!,
+        notes: editingEvent.notes || ""
       };
       setSchedule(prev => [...prev, newEvent]);
     } else {
@@ -1096,7 +1158,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           id: editingEvent.id, // ID is ignored/generated by push
           title: editingEvent.title || 'New Task',
           categoryId: editingEvent.categoryId,
-          durationMins: editingEvent.durationMins
+          durationMins: editingEvent.durationMins,
+          notes: editingEvent.notes || ""
         });
       } else {
         // Updating EXISTING task (Firebase Key)
@@ -1104,7 +1167,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           id: editingEvent.id,
           title: editingEvent.title || 'New Task',
           categoryId: editingEvent.categoryId,
-          durationMins: editingEvent.durationMins
+          durationMins: editingEvent.durationMins,
+          notes: editingEvent.notes || ""
         });
       }
       // We do NOT manually setUnassignedTasks here, listener does it
@@ -1132,13 +1196,65 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   // --- Settings Handlers ---
   const addRule = () => {
     if (!newRuleText.trim()) return;
-    const newRule: Rule = { id: Date.now().toString(), text: newRuleText };
-    setRules([...rules, newRule]);
+    addRuleToFirebase(newRuleText);
     setNewRuleText('');
   };
 
   const removeRule = (id: string) => {
-    setRules(rules.filter(r => r.id !== id));
+    removeRuleFromFirebase(id);
+  };
+
+  const applyAiActions = (actions: any[]) => {
+    if (Array.isArray(actions)) {
+      let newSchedule = [...schedule];
+      let changesCount = 0;
+
+      actions.forEach(action => {
+        if (action.action === 'add') {
+          const newEvent: ScheduledEvent = {
+            id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            title: action.name || 'Untitled',
+            timeSlot: action.zeit || '09:00',
+            durationMins: action.dauer || 60,
+            categoryId: action.kategorie || 'work',
+            dayIndex: action.tag !== undefined ? action.tag : 0
+          };
+          newSchedule.push(newEvent);
+          changesCount++;
+        } else if (action.action === 'update' && action.id) {
+          newSchedule = newSchedule.map(ev => {
+            if (ev.id === action.id) {
+              changesCount++;
+              return {
+                ...ev,
+                title: action.name || ev.title,
+                timeSlot: action.zeit || ev.timeSlot,
+                durationMins: action.dauer || ev.durationMins,
+                categoryId: action.kategorie || ev.categoryId,
+                dayIndex: action.tag !== undefined ? action.tag : ev.dayIndex
+              };
+            }
+            return ev;
+          });
+        } else if (action.action === 'delete' && action.id) {
+          const exists = newSchedule.some(ev => ev.id === action.id);
+          if (exists) {
+            newSchedule = newSchedule.filter(ev => ev.id !== action.id);
+            changesCount++;
+          }
+        }
+      });
+
+      if (changesCount > 0) {
+        setSchedule(newSchedule);
+        setHasUnsavedChanges(true);
+        setAiMessages(prev => [...prev, { role: 'ai', content: `Ich habe ${changesCount} Änderungen an deinem Plan vorgenommen.` }]);
+      } else {
+        setAiMessages(prev => [...prev, { role: 'ai', content: 'Ich konnte keine passenden Termine zum Ändern oder Löschen finden.' }]);
+      }
+    } else {
+      setAiMessages(prev => [...prev, { role: 'ai', content: 'Entschuldigung, ich konnte die Anfrage nicht verarbeiten.' }]);
+    }
   };
 
   const handleAiSubmit = async (e?: React.FormEvent) => {
@@ -1156,64 +1272,57 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         end: addDays(startOfWeek, 6).toDateString(),
         today: new Date().toDateString()
       };
-      const actions = await processAiRequest(userMsg, schedule, weekContext);
+      const aiRuleTexts = rules.map(r => r.text);
+      const actions = await processAiRequest(userMsg, schedule, weekContext, undefined, aiRuleTexts);
       console.log("AI Actions:", actions);
-
-      if (Array.isArray(actions)) {
-        let newSchedule = [...schedule];
-        let changesCount = 0;
-
-        actions.forEach(action => {
-          if (action.action === 'add') {
-            const newEvent: ScheduledEvent = {
-              id: `ai-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-              title: action.name || 'Untitled',
-              timeSlot: action.zeit || '09:00',
-              durationMins: action.dauer || 60,
-              categoryId: action.kategorie || 'work',
-              dayIndex: action.tag !== undefined ? action.tag : 0
-            };
-            newSchedule.push(newEvent);
-            changesCount++;
-          } else if (action.action === 'update' && action.id) {
-            newSchedule = newSchedule.map(ev => {
-              if (ev.id === action.id) {
-                changesCount++;
-                return {
-                  ...ev,
-                  title: action.name || ev.title,
-                  timeSlot: action.zeit || ev.timeSlot,
-                  durationMins: action.dauer || ev.durationMins,
-                  categoryId: action.kategorie || ev.categoryId,
-                  dayIndex: action.tag !== undefined ? action.tag : ev.dayIndex
-                };
-              }
-              return ev;
-            });
-          } else if (action.action === 'delete' && action.id) {
-            const exists = newSchedule.some(ev => ev.id === action.id);
-            if (exists) {
-              newSchedule = newSchedule.filter(ev => ev.id !== action.id);
-              changesCount++;
-            }
-          }
-        });
-
-        if (changesCount > 0) {
-          setSchedule(newSchedule);
-          setHasUnsavedChanges(true);
-          setAiMessages(prev => [...prev, { role: 'ai', content: `Ich habe ${changesCount} Änderungen an deinem Plan vorgenommen.` }]);
-        } else {
-          setAiMessages(prev => [...prev, { role: 'ai', content: 'Ich konnte keine passenden Termine zum Ändern oder Löschen finden.' }]);
-        }
-      } else {
-        setAiMessages(prev => [...prev, { role: 'ai', content: 'Entschuldigung, ich konnte die Anfrage nicht verarbeiten.' }]);
-      }
+      applyAiActions(actions);
     } catch (error) {
       console.error("AI Error:", error);
       setAiMessages(prev => [...prev, { role: 'ai', content: 'Es gab ein Problem bei der Verbindung zu Gemini. Bitte überprüfe deine API-Konfiguration.' }]);
     } finally {
       setIsAiLoading(false);
+    }
+  };
+
+  const handleMicClick = async () => {
+    // Falls wir gerade aufnehmen -> Stoppen
+    if (isRecording) {
+      if ((window as any).currentRecorder) {
+        (window as any).currentRecorder.stop();
+        setIsRecording(false);
+      }
+      return;
+    }
+
+    // Aufnahme starten
+    setIsRecording(true);
+    try {
+      const audioResult = await recordAudio(); // Wartet bis stop() aufgerufen wird
+
+      const audioData = {
+        inlineData: audioResult
+      };
+
+      setAiMessages(prev => [...prev, { role: 'user', content: '(Sprachanfrage...)' }]);
+      setIsAiLoading(true);
+
+      const weekContext = {
+        start: startOfWeek.toDateString(),
+        end: addDays(startOfWeek, 6).toDateString(),
+        today: new Date().toDateString()
+      };
+
+      const aiRuleTexts = rules.map(r => r.text);
+
+      // Voice Request an Gemini senden
+      const actions = await processAiRequest('', schedule, weekContext, audioData, aiRuleTexts);
+      applyAiActions(actions);
+    } catch (error) {
+      console.error("Audio AI Error:", error);
+      setAiMessages(prev => [...prev, { role: 'ai', content: 'Ups! Da gab es ein Problem mit der Audio-Eingabe.' }]);
+    } finally {
+      setIsAiLoading(false);
+      setIsRecording(false);
     }
   };
   const handleClearChat = () => {
@@ -1609,29 +1718,41 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
 
           {/* Input Area */}
           <form onSubmit={handleAiSubmit} className="p-4 bg-white dark:bg-surface-dark border-t border-neutral-100 dark:border-neutral-800">
-            <div className="relative flex items-end">
-              <textarea
-                ref={textareaRef}
-                rows={1}
-                value={aiInput}
-                onChange={(e) => setAiInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    handleAiSubmit();
-                  }
-                }}
-                placeholder="Termin hinzufügen, ändern..."
-                className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-xl px-4 py-3 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all resize-none max-h-32 custom-scrollbar min-h-[44px]"
-                disabled={isAiLoading}
-              />
-              <button
-                type="submit"
-                disabled={isAiLoading || !aiInput.trim()}
-                className="absolute right-2 bottom-2 text-primary p-1.5 hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
-              >
-                <ArrowLeft className="w-4 h-4 rotate-180" />
-              </button>
+            <div className="relative flex items-end gap-2">
+              <div className="relative flex-1">
+                <textarea
+                  ref={textareaRef}
+                  rows={1}
+                  value={aiInput}
+                  onChange={(e) => setAiInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleAiSubmit();
+                    }
+                  }}
+                  placeholder="Termin hinzufügen, ändern..."
+                  className="w-full bg-neutral-100 dark:bg-neutral-800 rounded-xl px-4 py-3 pr-20 text-sm focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all resize-none max-h-32 custom-scrollbar min-h-[44px]"
+                  disabled={isAiLoading}
+                />
+                <div className="absolute right-2 bottom-2 flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleMicClick}
+                    className={`p-1.5 rounded-lg transition-all ${isRecording ? 'bg-red-500 text-white animate-pulse' : 'text-neutral-400 hover:text-secondary hover:bg-neutral-100 dark:hover:bg-neutral-800'}`}
+                    title={isRecording ? 'Aufnahme stoppen' : 'Spracheingabe'}
+                  >
+                    <Mic className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isAiLoading || !aiInput.trim()}
+                    className="text-primary p-1.5 hover:bg-primary/10 rounded-lg transition-colors disabled:opacity-50"
+                  >
+                    <ArrowLeft className="w-4 h-4 rotate-180" />
+                  </button>
+                </div>
+              </div>
             </div>
           </form>
         </div>
@@ -1720,6 +1841,70 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
                     ))}
                   </div>
                 </div>
+
+                <div>
+                  <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 block mb-2">Notizen</label>
+
+                  {/* Toolbar */}
+                  <div className="flex items-center gap-1 p-2 bg-neutral-100 dark:bg-neutral-800 rounded-t-xl border border-neutral-200 dark:border-neutral-700 border-b-0">
+                    {[
+                      { icon: <Bold className="w-4 h-4" />, cmd: 'bold', title: 'Fett' },
+                      { icon: <Italic className="w-4 h-4" />, cmd: 'italic', title: 'Kursiv' },
+                      { icon: <Underline className="w-4 h-4" />, cmd: 'underline', title: 'Unterstrichen' },
+                      { icon: <List className="w-4 h-4" />, cmd: 'insertUnorderedList', title: 'Liste' },
+                      { icon: <ListOrdered className="w-4 h-4" />, cmd: 'insertOrderedList', title: 'Nummerierung' },
+                    ].map((btn, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          document.execCommand(btn.cmd, false);
+                          if (editorRef.current) {
+                            setEditingEvent({ ...editingEvent, notes: editorRef.current.innerHTML });
+                          }
+                        }}
+                        className="p-1.5 hover:bg-neutral-200 dark:hover:bg-neutral-700 rounded transition-colors text-neutral-600 dark:text-neutral-400"
+                        title={btn.title}
+                      >
+                        {btn.icon}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Editable Area */}
+                  <div
+                    ref={editorRef}
+                    contentEditable
+                    onInput={(e) => {
+                      if (editingEvent) {
+                        setEditingEvent({ ...editingEvent, notes: e.currentTarget.innerHTML });
+                      }
+                    }}
+                    onBlur={(e) => {
+                      if (editingEvent) {
+                        setEditingEvent({ ...editingEvent, notes: e.currentTarget.innerHTML });
+                      }
+                    }}
+                    className="w-full min-h-[150px] max-h-[300px] px-4 py-3 bg-neutral-50 dark:bg-neutral-900/40 border border-neutral-200 dark:border-neutral-700 rounded-b-xl focus:outline-none focus:border-primary text-sm overflow-y-auto custom-scrollbar prose dark:prose-invert prose-sm"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey && document.queryCommandValue('insertUnorderedList') === 'false' && document.queryCommandValue('insertOrderedList') === 'false') {
+                        // Standard behavior for rich text
+                      }
+                    }}
+                  />
+                </div>
+
+                <style>{`
+                  [contenteditable]:empty:before {
+                    content: "Notizen hier schreiben...";
+                    color: #9ca3af;
+                    pointer-events: none;
+                    display: block;
+                  }
+                  .prose ul { list-style-type: disc; padding-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+                  .prose ol { list-style-type: decimal; padding-left: 1.25rem; margin-top: 0.5rem; margin-bottom: 0.5rem; }
+                  .prose p { margin-bottom: 0.5rem; }
+                `}</style>
               </div>
 
               <div className="p-6 pt-0 flex gap-3">
@@ -1827,9 +2012,9 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
                     </div>
                     <div className="space-y-2 max-h-[250px] overflow-y-auto custom-scrollbar">
                       {rules.map(rule => (
-                        <div key={rule.id} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg group">
+                        <div key={rule.id} className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800/50 rounded-lg group border border-neutral-100 dark:border-neutral-800">
                           <span className="text-sm">{rule.text}</span>
-                          <button onClick={() => removeRule(rule.id)} className="text-neutral-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"><X className="w-4 h-4" /></button>
+                          <button onClick={() => removeRule(rule.id)} className="text-neutral-400 hover:text-red-500 transition-all"><X className="w-4 h-4" /></button>
                         </div>
                       ))}
                     </div>
