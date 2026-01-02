@@ -321,6 +321,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
 
   // Ref for the grid container
   const gridRef = useRef<HTMLDivElement>(null);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const calendarRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   // AI Assistant State
   const [aiInput, setAiInput] = useState('');
@@ -431,6 +433,18 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       handleSyncFromGoogle();
     }
   }, [isGapiInitialized, firebaseUser]);
+
+  // Scroll to calendar on mobile on mount
+  useLayoutEffect(() => {
+    if (window.innerWidth < 1024 && scrollContainerRef.current && calendarRef.current) {
+      const container = scrollContainerRef.current;
+      const calendar = calendarRef.current;
+      // Use requestAnimationFrame to ensure layout is done
+      requestAnimationFrame(() => {
+        container.scrollLeft = calendar.offsetLeft - (window.innerWidth - calendar.offsetWidth) / 2;
+      });
+    }
+  }, []);
 
   // 4. Auto-Upload Sync every minute
   useEffect(() => {
@@ -1333,10 +1347,10 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
 
 
   return (
-    <div className="min-h-screen pt-24 pb-8 px-4 sm:px-6 lg:px-8 animate-in fade-in duration-700 bg-background-light dark:bg-background-dark select-none">
+    <div className="h-[100dvh] lg:h-screen pb-0 lg:pb-8 lg:px-8 animate-in fade-in duration-700 bg-background-light dark:bg-background-dark select-none pt-20 lg:pt-24 px-0 flex flex-col overflow-hidden">
 
       {/* Header Bar */}
-      <div className="max-w-[1600px] mx-auto mb-6 flex items-center justify-between">
+      <div className="max-w-[1600px] w-full mx-auto mb-4 lg:mb-6 flex items-center justify-between px-4 lg:px-0 shrink-0">
         <div className="flex items-center gap-4">
           <button
             onClick={onBack}
@@ -1351,13 +1365,16 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       </div>
 
       {/* Main Grid Layout */}
-      <div className="max-w-[1600px] mx-auto grid grid-cols-1 lg:grid-cols-12 gap-6 h-auto lg:h-[calc(100vh-180px)] min-h-[600px]">
+      <div
+        ref={scrollContainerRef}
+        className="max-w-[1600px] w-full mx-auto flex-1 flex lg:grid lg:grid-cols-12 gap-0 lg:gap-6 overflow-x-auto lg:overflow-x-visible snap-x snap-mandatory lg:snap-none custom-scrollbar-hidden min-h-0"
+      >
 
-        {/* LEFT COLUMN: Organizer (Order 3 on mobile) */}
+        {/* LEFT COLUMN: Organizer (Order 1 on mobile) */}
         <div
           onDragOver={handleDragOver}
           onDrop={handleDropOnUnassigned}
-          className="lg:col-span-3 order-3 lg:order-1 flex flex-col h-[500px] lg:h-full bg-surface-light/50 dark:bg-surface-dark/50 border border-neutral-light dark:border-neutral-800 rounded-3xl p-6 overflow-hidden transition-colors hover:bg-neutral-100/50 dark:hover:bg-neutral-800/30 animate-in slide-in-from-left-4 fade-in duration-300"
+          className="min-w-full lg:min-w-0 lg:col-span-3 order-1 flex flex-col h-full bg-surface-light/50 dark:bg-surface-dark/50 border-x lg:border border-neutral-light dark:border-neutral-800 lg:rounded-3xl p-6 overflow-hidden transition-colors hover:bg-neutral-100/50 dark:hover:bg-neutral-800/30 animate-in slide-in-from-left-4 fade-in duration-300 snap-center"
         >
           <div className="mb-6 space-y-4">
             <div className="flex items-center justify-between">
@@ -1405,8 +1422,11 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* MIDDLE COLUMN: Calendar Grid (Order 1 on mobile) */}
-        <div className="lg:col-span-6 order-1 lg:order-2 flex flex-col h-[600px] lg:h-full bg-white dark:bg-surface-dark border border-neutral-light dark:border-neutral-800 rounded-3xl overflow-hidden shadow-sm transition-all duration-300">
+        {/* MIDDLE COLUMN: Calendar Grid (Order 2 on mobile) */}
+        <div
+          ref={calendarRef}
+          className="min-w-full lg:min-w-0 lg:col-span-6 order-2 flex flex-col h-full bg-white dark:bg-surface-dark border-x lg:border border-neutral-light dark:border-neutral-800 lg:rounded-3xl overflow-hidden shadow-sm transition-all duration-300 snap-center"
+        >
 
           {/* View Switcher & Action Buttons */}
           <div className="p-4 flex items-center justify-between bg-neutral-50/50 dark:bg-neutral-900/30 border-b border-neutral-100 dark:border-neutral-800">
@@ -1675,8 +1695,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Assistant (Order 2 on mobile) */}
-        <div className="lg:col-span-3 order-2 lg:order-3 flex flex-col h-[500px] lg:h-full bg-white dark:bg-surface-dark border border-neutral-light dark:border-neutral-800 rounded-3xl overflow-hidden shadow-sm transition-all duration-300">
+        {/* RIGHT COLUMN: Assistant (Order 3 on mobile) */}
+        <div className="min-w-full lg:min-w-0 lg:col-span-3 order-3 flex flex-col h-full bg-white dark:bg-surface-dark border-x lg:border border-neutral-light dark:border-neutral-800 lg:rounded-3xl overflow-hidden shadow-sm transition-all duration-300 snap-center">
           <div className="p-6 border-b border-neutral-100 dark:border-neutral-800 flex items-center justify-between">
             <h2 className="font-bold text-sm uppercase tracking-wider text-text-light/60 dark:text-text-dark/60">Assistant</h2>
             <button

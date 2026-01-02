@@ -29,3 +29,12 @@ body {
         @apply bg-background-dark text-text-dark;
     }
 }
+
+.custom-scrollbar-hidden {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+.custom-scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+}
