@@ -6,7 +6,7 @@ import {
   Clock, Trash2, Check, Download, UploadCloud, Loader2, LogOut, CalendarCheck
 } from 'lucide-react';
 
-import { GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, onAuthStateChanged, signOut, User } from 'firebase/auth';
+import { GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, User } from 'firebase/auth';
 import { ref, onValue, set, push, remove, update } from 'firebase/database';
 import { auth, db, firebaseConfig } from '../firebase';
 import { processAiRequest } from '../services/gemini';
@@ -318,7 +318,6 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   // Google API State
   const [isGapiInitialized, setIsGapiInitialized] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  const pendingTokenRef = useRef<string | null>(null);
 
   // Ref for the grid container
   const gridRef = useRef<HTMLDivElement>(null);
@@ -400,12 +399,6 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           // Load Calendar API v3 directly
           await (window as any).gapi.client.load('calendar', 'v3');
 
-          // If we already have a user (e.g. from redirect or session restore), try to ensure GAPI has token
-          if (pendingTokenRef.current) {
-            (window as any).gapi.client.setToken({ access_token: pendingTokenRef.current });
-            pendingTokenRef.current = null;
-          }
-
           setIsGapiInitialized(true);
         });
       };
@@ -436,42 +429,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     return () => clearInterval(autoSyncTimer);
   }, [hasUnsavedChanges, isGapiInitialized, firebaseUser, isSyncing]);
 
-  // 2. Firebase Auth Listener & Redirect Handling
+  // 2. Firebase Auth Listener
   useEffect(() => {
-    // 1. Handle Redirect Result (for mobile flow)
-    const handleRedirect = async () => {
-      try {
-        // First check sessionStorage for a token passed from App.tsx
-        const savedToken = sessionStorage.getItem('one48-gapi-token');
-        if (savedToken) {
-          if ((window as any).gapi?.client) {
-            (window as any).gapi.client.setToken({ access_token: savedToken });
-          } else {
-            pendingTokenRef.current = savedToken;
-          }
-          sessionStorage.removeItem('one48-gapi-token');
-        }
-
-        const result = await getRedirectResult(auth);
-        if (result) {
-          const credential = GoogleAuthProvider.credentialFromResult(result);
-          const accessToken = credential?.accessToken;
-          if (accessToken) {
-            if ((window as any).gapi?.client) {
-              (window as any).gapi.client.setToken({ access_token: accessToken });
-            } else {
-              pendingTokenRef.current = accessToken;
-            }
-          }
-          setFirebaseUser(result.user);
-        }
-      } catch (error) {
-        console.error("Redirect Login Error:", error);
-      }
-    };
-    handleRedirect();
-
-    // 2. Auth state listener
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       console.log("Auth State Changed:", user ? `Logged in as ${user.uid}` : "Logged out");
       setFirebaseUser(user);
@@ -541,26 +500,18 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       const provider = new GoogleAuthProvider();
       provider.addScope(SCOPES);
 
-      const isMobile = window.innerWidth < 1024 || /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      const result = await signInWithPopup(auth, provider);
 
-      if (isMobile) {
-        // Redirect logic for mobile
-        await signInWithRedirect(auth, provider);
-        return false; // Result will be handled in useEffect on redirect back
-      } else {
-        // Popup logic for desktop
-        const result = await signInWithPopup(auth, provider);
+      // This gives you a Google Access Token.
+      const credential = GoogleAuthProvider.credentialFromResult(result);
+      const accessToken = credential?.accessToken;
 
-        const credential = GoogleAuthProvider.credentialFromResult(result);
-        const accessToken = credential?.accessToken;
-
-        if (accessToken) {
-          (window as any).gapi.client.setToken({ access_token: accessToken });
-        }
-
-        setFirebaseUser(result.user);
-        return true;
+      if (accessToken) {
+        (window as any).gapi.client.setToken({ access_token: accessToken });
       }
+
+      setFirebaseUser(result.user);
+      return true;
     } catch (error: any) {
       console.error("Google Login Error:", error);
       if (error.code === 'auth/operation-not-allowed') {
@@ -706,20 +657,13 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   };
 
   // 1. Download: GCal -> Planner
-  const handleSyncFromGoogle = async (isManual = false) => {
+  const handleSyncFromGoogle = async () => {
     if (!isGapiInitialized) return;
 
     // Check if we need to login (either no Firebase user OR no GAPI token)
-    const token = (window as any).gapi?.client?.getToken();
-    if (!firebaseUser || !token) {
-      if (isManual) {
-        console.log("Token fehlt, starte manuellen Login...");
-        const success = await performGoogleLogin();
-        if (!success) return;
-      } else {
-        console.log("Synchronisierung übersprungen: Kein Token vorhanden (Auto-Sync).");
-        return;
-      }
+    if (!firebaseUser || !(window as any).gapi.client.getToken()) {
+      const success = await performGoogleLogin();
+      if (!success) return;
     }
 
     setIsSyncing(true);
@@ -796,18 +740,12 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     action();
   };
 
-
   // 2. Upload: Planner -> GCal
   const handleSyncToGoogle = async (isSilent = false) => {
     if (!isGapiInitialized) return;
 
     // Ensure auth
-    const token = (window as any).gapi?.client?.getToken();
-    if (!firebaseUser || !token) {
-      if (isSilent) {
-        console.log("Auto-Upload übersprungen: Kein Token vorhanden.");
-        return;
-      }
+    if (!firebaseUser || !(window as any).gapi.client.getToken()) {
       const success = await performGoogleLogin();
       if (!success) return;
     }
@@ -1385,7 +1323,7 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
 
             <div className="flex items-center gap-1">
               <button
-                onClick={() => handleSyncFromGoogle(true)}
+                onClick={handleSyncFromGoogle}
                 disabled={!isGapiInitialized || isSyncing}
                 className="w-8 h-8 rounded-lg flex items-center justify-center hover:bg-white dark:hover:bg-neutral-800 text-neutral-500 hover:text-primary transition-all disabled:opacity-50"
                 title="Sync from Google"
