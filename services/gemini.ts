@@ -57,10 +57,14 @@ export async function processAiRequest(
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
+    const selectedDayInfo = weekContext?.selectedDay
+        ? `\nWICHTIG: Der Benutzer hat den Tag "${weekContext.selectedDay}" ausgewählt. Alle Aktionen sollten sich auf diesen Tag beziehen, sofern nicht anders angegeben.`
+        : '';
+
     const textPart = `
 SYSTEM_PROMPT: ${SYSTEM_PROMPT}
 AKTUELLER ZEITPLAN: ${JSON.stringify(currentSchedule)}
-WOCHEN-KONTEXT: ${weekContext ? JSON.stringify(weekContext) : "Nicht verfügbar"}
+WOCHEN-KONTEXT: ${weekContext ? JSON.stringify(weekContext) : "Nicht verfügbar"}${selectedDayInfo}
 AI REGELN (BEACHTE DIESE UNBEDINGT): ${aiRules.length > 0 ? aiRules.join("; ") : "Keine speziellen Regeln"}
 BENUTZERANFRAGE: ${userPrompt || "Siehe Audio-Eingabe"}
 ANTWORT (NUR JSON):

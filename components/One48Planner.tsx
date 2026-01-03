@@ -331,6 +331,7 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   ]);
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const [draggedItem, setDraggedItem] = useState<{ id: string; type: 'task' | 'event'; durationMins: number; categoryId: string; title: string } | null>(null);
   const [dragPreview, setDragPreview] = useState<{ dayIndex: number; timeSlot: string } | null>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -1284,12 +1285,14 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
       const weekContext = {
         start: startOfWeek.toDateString(),
         end: addDays(startOfWeek, 6).toDateString(),
-        today: new Date().toDateString()
+        today: new Date().toDateString(),
+        selectedDay: selectedDayIndex !== null ? weekDays[selectedDayIndex].name + ' ' + weekDays[selectedDayIndex].date : undefined
       };
       const aiRuleTexts = rules.map(r => r.text);
       const actions = await processAiRequest(userMsg, schedule, weekContext, undefined, aiRuleTexts);
       console.log("AI Actions:", actions);
       applyAiActions(actions);
+      setSelectedDayIndex(null); // Reset day selection after submit
     } catch (error) {
       console.error("AI Error:", error);
       setAiMessages(prev => [...prev, { role: 'ai', content: 'Es gab ein Problem bei der Verbindung zu Gemini. Bitte überprüfe deine API-Konfiguration.' }]);
@@ -1736,8 +1739,29 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
             )}
           </div>
 
+          {/* Day Selection Bubbles */}
+          <div className="px-3 pt-2 pb-2 bg-white dark:bg-surface-dark border-t border-neutral-100 dark:border-neutral-800">
+            <div className="flex items-center gap-1 justify-between">
+              {weekDays.map((day) => (
+                <button
+                  key={day.index}
+                  type="button"
+                  onClick={() => setSelectedDayIndex(selectedDayIndex === day.index ? null : day.index)}
+                  className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all flex-1 ${selectedDayIndex === day.index
+                      ? 'bg-secondary text-white shadow-md scale-105'
+                      : day.isToday
+                        ? 'bg-secondary/10 text-secondary border border-secondary/30 hover:bg-secondary/20'
+                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                    }`}
+                >
+                  {day.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Input Area */}
-          <form onSubmit={handleAiSubmit} className="p-4 bg-white dark:bg-surface-dark border-t border-neutral-100 dark:border-neutral-800">
+          <form onSubmit={handleAiSubmit} className="p-4 pt-3 bg-white dark:bg-surface-dark">
             <div className="relative flex items-end gap-2">
               <div className="relative flex-1">
                 <textarea
