@@ -34,6 +34,7 @@ type Task = {
   durationMins: number;
   subtitle?: string;
   notes?: string;
+  isAllDay?: boolean;
 };
 
 type ScheduledEvent = Task & {
@@ -45,6 +46,7 @@ type ScheduledEvent = Task & {
 type EditableEvent = Task & {
   dayIndex?: number;
   timeSlot?: string;
+  isAllDay?: boolean;
 };
 
 type Rule = {
@@ -67,7 +69,8 @@ const INITIAL_CATEGORIES: Category[] = [
   { id: 'workout', name: 'Workout', color: 'blue', googleColorId: '9' },
   { id: 'work', name: 'Work', color: 'gray', googleColorId: '8' },
   { id: 'todo', name: 'To Do', color: 'orange', googleColorId: '6' },
-  { id: 'private', name: 'Private', color: 'emerald', googleColorId: '10' },
+  { id: 'daily', name: 'Daily', color: 'emerald', googleColorId: '10' },
+  { id: 'meals', name: 'Meals', color: 'amber', googleColorId: '5' },
 ];
 
 
@@ -114,9 +117,7 @@ const formatDate = (date: Date) => {
   return date.getDate().toString();
 };
 
-const formatMonthYear = (date: Date) => {
-  return date.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' });
-};
+
 
 // Convert "09:30" to minutes from start of day (e.g. 08:00 is minute 0 relative to grid)
 const getMinutesFromStart = (timeSlot: string) => {
@@ -171,6 +172,7 @@ const TaskCard = ({ task, category, isDraggable = false, onDragStart, onDragEnd,
     blue: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300',
     purple: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-300',
     gray: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
+    amber: 'bg-amber-100 text-amber-900 dark:bg-amber-500/20 dark:text-amber-200',
   }[colorBase];
 
   // Border and Background styles
@@ -180,6 +182,7 @@ const TaskCard = ({ task, category, isDraggable = false, onDragStart, onDragEnd,
     blue: 'border-l-blue-500',
     purple: 'border-l-purple-500',
     gray: 'border-l-gray-500',
+    amber: 'border-l-amber-500',
   }[colorBase];
 
   const subtleBg = isScheduled
@@ -189,6 +192,7 @@ const TaskCard = ({ task, category, isDraggable = false, onDragStart, onDragEnd,
       blue: 'bg-blue-50/70 dark:bg-blue-900/20',
       purple: 'bg-purple-50/70 dark:bg-purple-900/20',
       gray: 'bg-gray-50/70 dark:bg-neutral-800/40',
+      amber: 'bg-amber-50/70 dark:bg-amber-900/20',
     }[colorBase]
     : 'bg-white dark:bg-surface-dark';
 
@@ -486,9 +490,10 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         const loadedTasks: Task[] = Object.keys(data).map(key => ({
           id: key,
           title: data[key].name || "No Title",
-          categoryId: (data[key].category || 'work').toLowerCase(), // Force lowercase to match state
+          categoryId: ((c) => c === 'private' ? 'daily' : c)((data[key].category || 'work').toLowerCase()), // Map private->daily
           durationMins: Number(data[key].duration || 60),
-          notes: data[key].notes || ""
+          notes: data[key].notes || "",
+          isAllDay: !!data[key].isAllDay
         }));
         setUnassignedTasks(loadedTasks);
       } else {
@@ -506,7 +511,7 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         const loadedRoutines: WeeklyRoutine[] = Object.keys(data).map(key => ({
           id: key,
           title: data[key].title || "No Title",
-          categoryId: (data[key].categoryId || 'work').toLowerCase(),
+          categoryId: ((c) => c === 'private' ? 'daily' : c)((data[key].categoryId || 'work').toLowerCase()),
           durationMins: Number(data[key].durationMins || 60)
         }));
         setWeeklyRoutines(loadedRoutines);
@@ -603,7 +608,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         name: task.title,
         category: formatCategory(task.categoryId),
         duration: Number(task.durationMins),
-        notes: task.notes || ""
+        notes: task.notes || "",
+        isAllDay: !!task.isAllDay
       });
 
       // WICHTIG: Du musst die firebaseId in deinem lokalen Task-Objekt speichern,
@@ -629,7 +635,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         name: task.title,
         category: formatCategory(task.categoryId),
         duration: Number(task.durationMins),
-        notes: task.notes || ""
+        notes: task.notes || "",
+        isAllDay: !!task.isAllDay
       });
     } catch (error) {
       console.error("Fehler beim Update (Regeln verletzt?):", error);
@@ -761,24 +768,43 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         const newSchedule: ScheduledEvent[] = [];
 
         events.forEach((event: any) => {
-          if (!event.start.dateTime) return; // Skip all-day events for now if they have no time
+          // Check for All Day Event (has start.date but no start.dateTime)
+          const isAllDay = !!event.start.date;
+          const startTimeStr = event.start.dateTime || event.start.date; // Use date if dateTime missing
+          if (!startTimeStr) return;
 
-          const eventDate = new Date(event.start.dateTime);
-          const endDate = new Date(event.end.dateTime);
+          const eventDate = new Date(startTimeStr);
+          // For all-day events, start.date is YYYY-MM-DD. new Date("YYYY-MM-DD") is usually UTC. 
+          // We need to be careful with timezone offsets shifting the day. 
+          // However, startOfWeek logic might also need rigorous checking. 
+          // Let's assume standard local date parsing for now or fix to midnight local.
+          if (isAllDay) {
+            eventDate.setHours(0, 0, 0, 0);
+          }
+
+          const endDate = event.end.dateTime ? new Date(event.end.dateTime) : new Date(event.end.date || event.start.date);
+
 
           // Calculate Day Index (0 = Mon, 6 = Sun)
-          // Note: startOfWeek is Monday
           const diffTime = Math.abs(eventDate.getTime() - startOfWeek.getTime());
           const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
           // Only map Mon-Sun for our planner (0-6)
           if (diffDays >= 0 && diffDays <= 6) {
-            const h = eventDate.getHours();
-            const m = eventDate.getMinutes();
-            const timeSlot = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+            let timeSlot = "00:00";
+            let durationMins = 60;
 
-            const durationMs = endDate.getTime() - eventDate.getTime();
-            const durationMins = Math.round(durationMs / 60000);
+            if (!isAllDay) {
+              const h = eventDate.getHours();
+              const m = eventDate.getMinutes();
+              timeSlot = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+              const durationMs = endDate.getTime() - eventDate.getTime();
+              durationMins = Math.round(durationMs / 60000);
+            } else {
+              // For multi-day all-day events, this simple logic clips them to the first day. 
+              // Supporting multi-day spanning bars is complex. We will just show it on the start day for this iteration.
+              durationMins = 24 * 60;
+            }
 
             // Map Color to Category
             // Default to 'work' if unknown
@@ -795,10 +821,13 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
               durationMins: durationMins,
               dayIndex: diffDays,
               timeSlot: timeSlot,
-              notes: event.description || ""
+              notes: event.description || "",
+              isAllDay: isAllDay
             });
           }
         });
+
+
 
         setSchedule(newSchedule);
 
@@ -815,7 +844,7 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
   };
 
   // 2. Upload: Planner -> GCal
-  const handleSyncToGoogle = async (isSilent = false) => {
+  const handleSyncToGoogle = async (_isSilent = false) => {
     if (!isGapiInitialized) return;
 
     // Ensure auth
@@ -872,19 +901,41 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
           const category = categories.find(c => c.id === ev.categoryId);
           const colorId = category?.googleColorId || '8'; // Default gray
 
-          const resource = {
+          let resource: any = {
             'summary': ev.title,
-            'start': {
-              'dateTime': evDate.toISOString(),
-              'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-            },
-            'end': {
-              'dateTime': endDate.toISOString(),
-              'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
-            },
             'colorId': colorId,
             'description': ev.notes || ""
           };
+
+          if (ev.isAllDay) {
+            // All Day Event
+            // Format YYYY-MM-DD using local time to avoid timezone shifts (toISOString is UTC)
+            const formatLocalDate = (d: Date) => {
+              const year = d.getFullYear();
+              const month = String(d.getMonth() + 1).padStart(2, '0');
+              const day = String(d.getDate()).padStart(2, '0');
+              return `${year}-${month}-${day}`;
+            };
+
+            const startStr = formatLocalDate(evDate);
+            const endD = new Date(evDate);
+            endD.setDate(endD.getDate() + 1); // +1 day for exclusive end
+            const endStr = formatLocalDate(endD);
+
+            resource.start = { 'date': startStr };
+            resource.end = { 'date': endStr };
+
+          } else {
+            // Timed Event
+            resource.start = {
+              'dateTime': evDate.toISOString(),
+              'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+            resource.end = {
+              'dateTime': endDate.toISOString(),
+              'timeZone': Intl.DateTimeFormat().resolvedOptions().timeZone
+            };
+          }
 
           insertBatch.add((window as any).gapi.client.calendar.events.insert({
             'calendarId': 'primary',
@@ -1118,7 +1169,10 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
     if (isResizingRef.current) return;
 
     if (item) {
-      setEditingEvent(item);
+      setEditingEvent({
+        ...item,
+        isAllDay: item.isAllDay || false // Ensure flag existence
+      });
     } else {
       // Create new blank event
       setEditingEvent({
@@ -1127,8 +1181,9 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         categoryId: categories[0].id,
         durationMins: 60,
         dayIndex: 0, // Default to Monday
-        timeSlot: '', // Empty means unassigned
-        notes: ''
+        timeSlot: '09:00', // Default time
+        notes: '',
+        isAllDay: false
       });
     }
     setIsEditModalOpen(true);
@@ -1162,7 +1217,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
         durationMins: editingEvent.durationMins,
         dayIndex: editingEvent.dayIndex !== undefined ? editingEvent.dayIndex : 0,
         timeSlot: editingEvent.timeSlot!,
-        notes: editingEvent.notes || ""
+        notes: editingEvent.notes || "",
+        isAllDay: editingEvent.isAllDay
       };
       setSchedule(prev => [...prev, newEvent]);
     } else {
@@ -1232,7 +1288,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
             timeSlot: action.zeit || '09:00',
             durationMins: action.dauer || 60,
             categoryId: action.kategorie || 'work',
-            dayIndex: action.tag !== undefined ? action.tag : 0
+            dayIndex: action.tag !== undefined ? action.tag : 0,
+            isAllDay: !!action.ganztaegig
           };
           newSchedule.push(newEvent);
           changesCount++;
@@ -1246,7 +1303,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
                 timeSlot: action.zeit || ev.timeSlot,
                 durationMins: action.dauer || ev.durationMins,
                 categoryId: action.kategorie || ev.categoryId,
-                dayIndex: action.tag !== undefined ? action.tag : ev.dayIndex
+                dayIndex: action.tag !== undefined ? action.tag : ev.dayIndex,
+                isAllDay: action.ganztaegig !== undefined ? !!action.ganztaegig : ev.isAllDay
               };
             }
             return ev;
@@ -1495,20 +1553,63 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
 
           {/* Day Header */}
           {viewMode !== 'list' && (
-            <div
-              className="grid border-b border-neutral-100 dark:border-neutral-800 bg-white dark:bg-surface-dark z-20"
-              style={{ gridTemplateColumns: `60px repeat(${displayDays.length}, 1fr)` }}
-            >
-              <div className="p-2 lg:p-4 border-r border-neutral-100 dark:border-neutral-800 flex items-center justify-center text-xs font-bold text-neutral-400"></div>
-              {displayDays.map((day) => (
-                <div key={day.index} className={`p-2 lg:p-4 text-center border-r border-neutral-100 dark:border-neutral-800 last:border-r-0 ${day.isToday ? 'bg-neutral-100/30 dark:bg-neutral-800/20' : ''}`}>
-                  <div className="text-[10px] font-bold uppercase text-neutral-400 mb-1">{day.name}</div>
-                  <div className={`text-sm lg:text-xl font-display font-bold w-8 h-8 lg:w-10 lg:h-10 mx-auto flex items-center justify-center rounded-full ${day.isToday ? 'bg-secondary text-white shadow-md' : 'text-text-light dark:text-text-dark'}`}>
-                    {day.date}
+            <>
+              {/* Day Columns Header */}
+              <div
+                className="grid border-b border-neutral-100 dark:border-neutral-800 bg-white dark:bg-surface-dark z-20"
+                style={{ gridTemplateColumns: `60px repeat(${displayDays.length}, 1fr)` }}
+              >
+                <div className="p-2 lg:p-4 border-r border-neutral-100 dark:border-neutral-800 flex items-center justify-center text-xs font-bold text-neutral-400"></div>
+                {displayDays.map((day) => (
+                  <div key={day.index} className={`p-2 lg:p-4 text-center border-r border-neutral-100 dark:border-neutral-800 last:border-r-0 ${day.isToday ? 'bg-neutral-100/30 dark:bg-neutral-800/20' : ''}`}>
+                    <div className="text-[10px] font-bold uppercase text-neutral-400 mb-1">{day.name}</div>
+                    <div className={`text-sm lg:text-xl font-display font-bold w-8 h-8 lg:w-10 lg:h-10 mx-auto flex items-center justify-center rounded-full ${day.isToday ? 'bg-secondary text-white shadow-md' : 'text-text-light dark:text-text-dark'}`}>
+                      {day.date}
+                    </div>
                   </div>
+                ))}
+              </div>
+
+              {/* All Day Events Row (Sticky-ish) */}
+              <div
+                className="grid border-b border-neutral-100 dark:border-neutral-800 bg-white dark:bg-surface-dark z-20 min-h-[40px]"
+                style={{ gridTemplateColumns: `60px repeat(${displayDays.length}, 1fr)` }}
+              >
+                <div className="p-2 border-r border-neutral-100 dark:border-neutral-800 flex items-center justify-center">
+                  <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-tight">All Day</span>
                 </div>
-              ))}
-            </div>
+                {displayDays.map((day) => {
+                  const allDayEvents = schedule.filter(s => s.dayIndex === day.index && s.isAllDay);
+                  return (
+                    <div key={`allday-${day.index}`} className={`p-1 border-r border-neutral-100 dark:border-neutral-800 last:border-r-0 flex flex-col gap-1 ${day.isToday ? 'bg-neutral-100/30 dark:bg-neutral-800/20' : ''}`}>
+                      {allDayEvents.map(event => {
+                        const cat = categories.find(c => c.id === event.categoryId);
+                        const colorBase = cat?.color || 'gray';
+                        const bgClass = {
+                          orange: 'bg-orange-100 text-orange-800 border-orange-200 dark:bg-orange-900/30 dark:text-orange-200 dark:border-orange-800',
+                          emerald: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-200 dark:border-emerald-800',
+                          blue: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-200 dark:border-blue-800',
+                          purple: 'bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-900/30 dark:text-purple-200 dark:border-purple-800',
+                          gray: 'bg-gray-100 text-gray-800 border-gray-200 dark:bg-neutral-800 dark:text-gray-200 dark:border-neutral-700',
+                          amber: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-200 dark:border-amber-800',
+                        }[colorBase] || 'bg-gray-100 text-gray-800';
+
+                        return (
+                          <div
+                            key={event.id}
+                            onClick={() => openEditModal(event)}
+                            className={`px-2 py-1 rounded text-xs font-bold border ${bgClass} truncate cursor-pointer hover:opacity-80 transition-opacity`}
+                            title={event.title}
+                          >
+                            {event.title}
+                          </div>
+                        )
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
 
           {/* Scrollable Grid Area */}
@@ -1593,8 +1694,9 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
                 {/* Day Columns */}
                 {displayDays.map((day) => {
                   // Filter events for this day
+                  // IMPORTANT: Exclude All Day Events from the time grid
                   const dayEvents = schedule
-                    .filter(s => s.dayIndex === day.index)
+                    .filter(s => s.dayIndex === day.index && !s.isAllDay)
                     .sort((a, b) => getMinutesFromStart(a.timeSlot) - getMinutesFromStart(b.timeSlot));
 
                   return (
@@ -1748,10 +1850,10 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
                   type="button"
                   onClick={() => setSelectedDayIndex(selectedDayIndex === day.index ? null : day.index)}
                   className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide transition-all flex-1 ${selectedDayIndex === day.index
-                      ? 'bg-secondary text-white shadow-md scale-105'
-                      : day.isToday
-                        ? 'bg-secondary/10 text-secondary border border-secondary/30 hover:bg-secondary/20'
-                        : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                    ? 'bg-secondary text-white shadow-md scale-105'
+                    : day.isToday
+                      ? 'bg-secondary/10 text-secondary border border-secondary/30 hover:bg-secondary/20'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 hover:bg-neutral-200 dark:hover:bg-neutral-700'
                     }`}
                 >
                   {day.name}
@@ -1829,8 +1931,8 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
+                <div className="flex gap-4">
+                  <div className="flex-1">
                     <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 block mb-2">Day</label>
                     <select
                       value={editingEvent.dayIndex !== undefined ? editingEvent.dayIndex : 0}
@@ -1843,33 +1945,57 @@ const One48Planner: React.FC<One48PlannerProps> = ({ onBack }) => {
                     </select>
                   </div>
 
-                  <div>
-                    <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 block mb-2">Time</label>
-                    <select
-                      value={editingEvent.timeSlot || ''}
-                      onChange={(e) => setEditingEvent({ ...editingEvent, timeSlot: e.target.value })}
-                      className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:border-primary appearance-none cursor-pointer"
-                    >
-                      <option value="">Keine Zeit (Unassigned)</option>
-                      {TIME_DROPDOWN_OPTIONS.map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
+                  {/* Time + All Day Checkbox Container */}
+                  <div className="flex-1 flex flex-col">
+                    <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 mb-2 flex justify-between items-center">
+                      <span>Time</span>
+                      <div className="flex items-center gap-2 normal-case tracking-normal">
+                        <input
+                          type="checkbox"
+                          id="allDayCheck"
+                          checked={editingEvent.isAllDay || false}
+                          onChange={(e) => setEditingEvent({
+                            ...editingEvent,
+                            isAllDay: e.target.checked,
+                            // If checking 'All Day', ensure we have a valid time fallback if unchecked later? 
+                            // Actually, standard behavior is keep time but hide inputs. 
+                          })}
+                          className="w-4 h-4 rounded text-primary focus:ring-primary border-gray-300"
+                        />
+                        <label htmlFor="allDayCheck" className="text-[10px] font-bold cursor-pointer">Ganztägig</label>
+                      </div>
+                    </label>
+
+                    <div className="relative">
+                      <select
+                        value={editingEvent.timeSlot || ''}
+                        onChange={(e) => setEditingEvent({ ...editingEvent, timeSlot: e.target.value })}
+                        disabled={editingEvent.isAllDay}
+                        className={`w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:border-primary appearance-none cursor-pointer ${editingEvent.isAllDay ? 'opacity-30 cursor-not-allowed' : ''}`}
+                      >
+                        <option value="">Keine Zeit (Unassigned)</option>
+                        {TIME_DROPDOWN_OPTIONS.map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 block mb-2">Duration (min)</label>
-                  <select
-                    value={editingEvent.durationMins}
-                    onChange={(e) => setEditingEvent({ ...editingEvent, durationMins: parseInt(e.target.value) })}
-                    className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:border-primary appearance-none cursor-pointer"
-                  >
-                    {DURATION_OPTIONS.map((min) => (
-                      <option key={min} value={min}>{min} Minutes</option>
-                    ))}
-                  </select>
-                </div>
+                {!editingEvent.isAllDay && (
+                  <div>
+                    <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 block mb-2">Duration (min)</label>
+                    <select
+                      value={editingEvent.durationMins}
+                      onChange={(e) => setEditingEvent({ ...editingEvent, durationMins: parseInt(e.target.value) })}
+                      className="w-full px-4 py-3 bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-xl focus:outline-none focus:border-primary appearance-none cursor-pointer"
+                    >
+                      {DURATION_OPTIONS.map((min) => (
+                        <option key={min} value={min}>{min} Minutes</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
 
                 <div>
                   <label className="text-xs font-bold uppercase tracking-widest text-neutral-400 block mb-2">Category</label>
