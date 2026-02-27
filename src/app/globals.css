@@ -1,0 +1,88 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-primary: #EA580C;
+  --color-secondary: #2563EB;
+  --color-background-light: #F9F9F7;
+  --color-background-dark: #111827;
+  --color-surface-light: #FFFFFF;
+  --color-surface-dark: #1F2937;
+  --color-text-light: #171717;
+  --color-text-dark: #F3F4F6;
+  --color-neutral-light: #E5E7EB;
+  --color-neutral-dark: #374151;
+
+  /* next/font sets these CSS vars on the html element; Tailwind generates font-body / font-display utilities */
+  --font-body: var(--font-inter), sans-serif;
+  --font-display: var(--font-space-grotesk), sans-serif;
+
+  --background-image-gradient-glow-light: linear-gradient(135deg, rgba(37,99,235,0.1) 0%, rgba(234,88,12,0.1) 100%);
+  --background-image-gradient-glow-dark: linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(234,88,12,0.15) 100%);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-background-light text-text-light font-body transition-colors duration-300;
+}
+
+/* Custom classes from index.html <style> block */
+.blur-orb-1 {
+  filter: blur(80px);
+}
+
+.blur-orb-2 {
+  filter: blur(100px);
+}
+
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom Sleek Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
