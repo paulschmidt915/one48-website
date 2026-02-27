@@ -10,7 +10,7 @@ import { Loader2 } from 'lucide-react';
 export default function TrackerPage() {
     const [entries, setEntries] = useState<NutritionEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const dateStr = getLocalDateString();
+    const [dateStr, setDateStr] = useState(getLocalDateString());
 
     const fetchEntries = async () => {
         setIsLoading(true);
@@ -42,6 +42,24 @@ export default function TrackerPage() {
     const totalFat = entries.reduce((acc, e) => acc + (e.fat || 0), 0);
     const totalCarbs = entries.reduce((acc, e) => acc + (e.carbs || 0), 0);
 
+    const handlePrevDate = () => {
+        const d = new Date(dateStr);
+        d.setDate(d.getDate() - 1);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        setDateStr(`${year}-${month}-${day}`);
+    };
+
+    const handleNextDate = () => {
+        const d = new Date(dateStr);
+        d.setDate(d.getDate() + 1);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        setDateStr(`${year}-${month}-${day}`);
+    };
+
     return (
         <div className="min-h-screen bg-transparent font-sans pt-6">
             <div className="max-w-2xl mx-auto px-4 relative">
@@ -51,6 +69,8 @@ export default function TrackerPage() {
                     protein={totalProtein}
                     fat={totalFat}
                     carbs={totalCarbs}
+                    onPrevDate={handlePrevDate}
+                    onNextDate={handleNextDate}
                 />
 
                 {isLoading ? (
@@ -61,8 +81,10 @@ export default function TrackerPage() {
                     <div className="mt-8 transition-all">
                         {entries.length === 0 ? (
                             <div className="text-center py-16">
-                                <p className="text-gray-400 font-medium">Noch keine Einträge heute.</p>
-                                <p className="text-gray-400 text-sm mt-1">Erzähle mir, was du gegessen hast.</p>
+                                <p className="text-gray-400 font-medium">Keine Einträge für diesen Tag.</p>
+                                {dateStr === getLocalDateString() && (
+                                    <p className="text-gray-400 text-sm mt-1">Erzähle mir, was du gegessen hast.</p>
+                                )}
                             </div>
                         ) : (
                             <EntryList
@@ -74,7 +96,7 @@ export default function TrackerPage() {
                 )}
             </div>
 
-            <TrackerInput onEntriesAdded={fetchEntries} />
+            <TrackerInput onEntriesAdded={fetchEntries} selectedDate={dateStr} />
         </div>
     );
 }
