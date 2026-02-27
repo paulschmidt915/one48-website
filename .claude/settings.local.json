@@ -4,7 +4,8 @@
       "Bash(powershell -Command \"Get-Content ''C:\\\\Users\\\\scmj312\\\\Documents\\\\one48-website\\\\components\\\\One48Planner.tsx'' | Measure-Object -Line | Select-Object -ExpandProperty Lines\")",
       "Bash(powershell -Command:*)",
       "Bash(npm install:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "mcp__claude_ai_Figma__get_design_context"
     ]
   }
 }

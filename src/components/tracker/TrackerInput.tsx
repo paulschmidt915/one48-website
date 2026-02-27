@@ -39,7 +39,6 @@ const compressImage = (file: File): Promise<string> => {
                     return;
                 }
                 ctx.drawImage(img, 0, 0, width, height);
-                // Compress to 80% quality JPEG
                 const dataUrl = canvas.toDataURL('image/jpeg', 0.8);
                 resolve(dataUrl);
             };
@@ -61,12 +60,17 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
     const recognitionRef = useRef<any>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Image state
     const [capturedImage, setCapturedImage] = useState<string | null>(null);
     const [amountText, setAmountText] = useState('');
+    const textareaRef = useRef<HTMLTextAreaElement>(null);
 
     useEffect(() => {
-        // Setup Speech Recognition
+        if (!text && textareaRef.current) {
+            textareaRef.current.style.height = 'auto';
+        }
+    }, [text]);
+
+    useEffect(() => {
         const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
         if (SpeechRecognition) {
             recognitionRef.current = new SpeechRecognition();
@@ -111,12 +115,10 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
         if (!file) return;
 
         try {
-            // Komprimiere das Bild, um "Payload too large" Fehler bei Handy-Fotos zu vermeiden
             const compressedBase64 = await compressImage(file);
             setCapturedImage(compressedBase64);
         } catch (error) {
             console.error("Error compressing image:", error);
-            // Fallback auf originales Bild
             const reader = new FileReader();
             reader.onloadend = () => {
                 setCapturedImage(reader.result as string);
@@ -133,14 +135,11 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
             let entries: NutritionEntry[] = [];
 
             if (capturedImage) {
-                // Parse Image
                 const base64Data = capturedImage.split(',')[1];
                 const mimeType = capturedImage.split(';')[0].split(':')[1];
-
                 const result = await parseNutritionImage(base64Data, mimeType, amountText);
                 entries = Array.isArray(result) ? result : [result];
             } else {
-                // Parse Text
                 const result = await parseNutritionText(text);
                 entries = Array.isArray(result) ? result : [result];
             }
@@ -161,89 +160,125 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
     };
 
     return (
-        <div className="fixed bottom-6 left-0 right-0 px-4 md:px-0 flex justify-center z-50">
-            <div className="w-full max-w-lg bg-white/80 backdrop-blur-2xl rounded-full shadow-[0_20px_40px_rgba(0,0,0,0.08)] border border-white p-2">
+        <div className="fixed bottom-0 left-0 right-0 bg-[#f0efed] border-t border-[#cbd5e1] z-50">
+            <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                ref={fileInputRef}
+                aria-label="Bild hochladen"
+                className="hidden"
+                onChange={handleFileChange}
+            />
 
-                {capturedImage ? (
-                    <div className="p-4 flex flex-col gap-4">
-                        <div className="flex gap-4 items-center">
-                            <img src={capturedImage} alt="Captured" className="w-16 h-16 object-cover rounded-2xl border border-gray-100 shadow-sm" />
-                            <div className="flex-1 flex flex-col gap-2">
-                                <span className="text-xs font-medium text-gray-500 uppercase tracking-widest">Menge eingeben</span>
-                                <input
-                                    type="text"
-                                    value={amountText}
-                                    onChange={(e) => setAmountText(e.target.value)}
-                                    placeholder="z.B. 150g, 1 Packung"
-                                    className="w-full bg-gray-100/50 rounded-xl px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-black transition-all"
-                                    disabled={isLoading}
-                                />
-                            </div>
-                            <button
-                                onClick={() => setCapturedImage(null)}
-                                className="p-3 text-red-500 bg-red-50 hover:bg-red-100 rounded-2xl transition-all"
+            {capturedImage ? (
+                /* Image mode */
+                <div className="px-6 py-4 flex flex-col gap-3">
+                    <div className="flex gap-4 items-center">
+                        <img
+                            src={capturedImage}
+                            alt="Captured food"
+                            className="w-12 h-12 object-cover shrink-0"
+                        />
+                        <div className="flex-1">
+                            <input
+                                type="text"
+                                value={amountText}
+                                onChange={(e) => setAmountText(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                                placeholder="Menge eingeben, z.B. 150g"
+                                className="w-full bg-transparent [font-family:var(--font-ibm-plex-mono)] text-[14px] text-[#111] placeholder-[#94a3b8] outline-none"
                                 disabled={isLoading}
-                            >
-                                <CameraOff size={20} />
-                            </button>
+                                autoFocus
+                            />
                         </div>
                         <button
-                            onClick={handleSubmit}
-                            disabled={isLoading || !amountText.trim()}
-                            className="bg-black text-white w-full rounded-2xl py-3.5 font-medium flex justify-center items-center gap-2 hover:bg-gray-800 transition-all disabled:opacity-50"
+                            type="button"
+                            onClick={() => setCapturedImage(null)}
+                            aria-label="Bild entfernen"
+                            disabled={isLoading}
+                            className="text-[#94a3b8] hover:text-[#475569] transition-colors"
                         >
-                            {isLoading ? <Loader2 className="animate-spin" size={20} /> : "Eintrag speichern"}
+                            <CameraOff size={16} strokeWidth={1.5} />
                         </button>
                     </div>
-                ) : (
-                    <div className="flex items-center gap-2 relative">
-                        <button
-                            onClick={handleCameraClick}
-                            disabled={isLoading}
-                            className="p-3.5 text-gray-400 hover:text-black hover:bg-gray-100/50 rounded-full transition-all"
-                        >
-                            <Camera size={22} />
-                        </button>
+                    <button
+                        type="button"
+                        onClick={handleSubmit}
+                        disabled={isLoading || !amountText.trim()}
+                        className="[font-family:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[1.1px] text-[#111] disabled:text-[#94a3b8] transition-colors flex items-center gap-2"
+                    >
+                        {isLoading
+                            ? <><Loader2 className="animate-spin" size={14} /> Verarbeite...</>
+                            : '> Eintrag speichern'
+                        }
+                    </button>
+                </div>
+            ) : (
+                /* Default text input mode */
+                <div className="flex items-end min-h-14 px-6 py-4 gap-4">
+                    <textarea
+                        ref={textareaRef}
+                        rows={1}
+                        value={text}
+                        onChange={(e) => {
+                            setText(e.target.value);
+                            const el = textareaRef.current;
+                            if (el) {
+                                el.style.height = 'auto';
+                                el.style.height = `${el.scrollHeight}px`;
+                            }
+                        }}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault();
+                                handleSubmit();
+                            }
+                        }}
+                        placeholder="> Add entry..."
+                        disabled={isLoading}
+                        className="flex-1 bg-transparent [font-family:var(--font-ibm-plex-mono)] text-[14px] text-[#111] placeholder-[#94a3b8] outline-none resize-none overflow-hidden leading-[1.5]"
+                    />
 
-                        <input
-                            type="file"
-                            accept="image/*"
-                            capture="environment"
-                            ref={fileInputRef}
-                            className="hidden"
-                            onChange={handleFileChange}
-                        />
-
-                        <input
-                            type="text"
-                            value={text}
-                            onChange={(e) => setText(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                            placeholder="Eintrag eingeben..."
-                            disabled={isLoading}
-                            className="flex-1 bg-transparent px-2 text-[15px] outline-none placeholder-gray-400 text-gray-800"
-                        />
-
+                    <div className="flex items-center gap-4 shrink-0">
                         {text.trim() ? (
                             <button
+                                type="button"
                                 onClick={handleSubmit}
                                 disabled={isLoading}
-                                className="p-3.5 bg-black text-white rounded-full hover:scale-105 active:scale-95 transition-all disabled:bg-gray-300"
+                                aria-label="Absenden"
+                                className="text-[#111] hover:text-[#475569] disabled:text-[#94a3b8] transition-colors"
                             >
-                                {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Send size={20} className="ml-0.5" />}
+                                {isLoading
+                                    ? <Loader2 className="animate-spin" size={16} strokeWidth={1.5} />
+                                    : <Send size={16} strokeWidth={1.5} />
+                                }
                             </button>
                         ) : (
-                            <button
-                                onClick={toggleRecording}
-                                disabled={isLoading || !recognitionRef.current}
-                                className={`p-3.5 text-gray-400 hover:text-black hover:bg-gray-100/50 rounded-full transition-all ${isRecording ? 'text-red-500 animate-pulse bg-red-50' : ''}`}
-                            >
-                                <Mic size={22} />
-                            </button>
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={handleCameraClick}
+                                    disabled={isLoading}
+                                    aria-label="Foto aufnehmen"
+                                    className="text-[#94a3b8] hover:text-[#475569] transition-colors"
+                                >
+                                    <Camera size={16} strokeWidth={1.5} />
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={toggleRecording}
+                                    disabled={isLoading || !recognitionRef.current}
+                                    aria-label={isRecording ? 'Aufnahme stoppen' : 'Spracheingabe starten'}
+                                    className={`transition-colors ${isRecording ? 'text-red-500 animate-pulse' : 'text-[#94a3b8] hover:text-[#475569]'}`}
+                                >
+                                    <Mic size={16} strokeWidth={1.5} />
+                                </button>
+                            </>
                         )}
                     </div>
-                )}
-            </div>
+                </div>
+            )}
         </div>
     );
 }

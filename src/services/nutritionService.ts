@@ -61,3 +61,28 @@ export async function deleteNutritionEntry(entryId: string, dateStr: string = ge
     const entryRef = ref(db, `nutrition_entries/${DEFAULT_USER}/${dateStr}/${entryId}`);
     await remove(entryRef);
 }
+
+export async function getRecentEntries(daysBack: number = 14): Promise<NutritionEntry[]> {
+    const today = new Date();
+    const dateStrings: string[] = [];
+
+    for (let i = 1; i <= daysBack; i++) {
+        const d = new Date(today);
+        d.setDate(d.getDate() - i);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        dateStrings.push(`${year}-${month}-${day}`);
+    }
+
+    const results = await Promise.all(
+        dateStrings.map(dateStr => getNutritionEntries(dateStr).catch(() => [] as NutritionEntry[]))
+    );
+
+    const allEntries: NutritionEntry[] = [];
+    for (const dayEntries of results) {
+        allEntries.push(...dayEntries);
+    }
+
+    return allEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+}

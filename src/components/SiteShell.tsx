@@ -26,10 +26,10 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
 
   const navigateTo = (view: View) => router.push(VIEW_ROUTES[view])
 
-  const isTracker = pathname === '/tracker'
+  const isTracker = pathname?.startsWith('/tracker')
 
   return (
-    <div className={isTracker ? 'min-h-screen bg-white relative z-10' : 'relative z-10'}>
+    <div className={isTracker ? 'min-h-screen bg-[#f0efed] relative z-10' : 'relative z-10'}>
       {!isTracker && <Navbar onNavigate={navigateTo} currentView={currentView} />}
       <main className={isTracker ? 'pb-32' : ''}>{children}</main>
       {!isTracker && <Footer onNavigate={navigateTo} />}
