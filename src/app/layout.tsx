@@ -34,6 +34,20 @@ export const metadata: Metadata = {
     siteName: 'one48',
     locale: 'de_DE',
     type: 'website',
+    images: [
+      {
+        url: '/opengraph-image',
+        width: 1200,
+        height: 630,
+        alt: 'one48 – GenAI & Digitalisierungs-Beratung',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'one48 – GenAI & Digitalisierungs-Beratung',
+    description: 'Praxisnahe GenAI-Beratung und Trainings für Unternehmen. Gemeinsam entwickeln wir Ihre KI-Strategie – schnell, konkret und messbar.',
+    images: ['/opengraph-image'],
   },
 }
 
