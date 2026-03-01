@@ -60,10 +60,7 @@ export default function MacroSummary({ dateStr, kcal, protein, fat, carbs, onPre
     return (
         <div className="w-full">
             {/* Header */}
-            <div className="border-b border-[#cbd5e1] pb-6 pt-10 px-6">
-                {/* Status bar spacer */}
-                <div className="h-8" />
-
+            <div className="tracker-header border-b border-[#cbd5e1] pb-6 px-6">
                 {/* Date Navigation */}
                 <div className="flex items-center justify-between">
                     <Link

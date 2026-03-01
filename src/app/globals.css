@@ -86,3 +86,29 @@ body {
 .custom-scrollbar-hidden::-webkit-scrollbar {
   display: none;
 }
+
+/* iOS PWA Safe Area */
+.tracker-header {
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+}
+
+.tracker-input-bar {
+  padding-top: 8px;
+  padding-bottom: calc(env(safe-area-inset-bottom) + 21px);
+}
+
+/* Tracker controls row enter animation */
+.tracker-controls-row {
+  animation: trackerControlsIn 150ms ease-out;
+}
+
+@keyframes trackerControlsIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

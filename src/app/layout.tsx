@@ -1,8 +1,12 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import './globals.css'
 import SiteShell from '@/components/SiteShell'
 import { Analytics } from "@vercel/analytics/next"
+
+export const viewport: Viewport = {
+  viewportFit: 'cover',
+}
 
 const inter = Inter({
   subsets: ['latin'],
