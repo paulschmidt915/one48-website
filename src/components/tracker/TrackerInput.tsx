@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Mic, Send, Camera, CameraOff, Loader2 } from 'lucide-react';
+import { Send, Camera, CameraOff, Loader2 } from 'lucide-react';
 import { parseNutritionText, parseNutritionImage } from '@/services/geminiNutrition';
 import { addNutritionEntries, NutritionEntry } from '@/services/nutritionService';
 
@@ -57,6 +57,24 @@ const PLACEHOLDERS = [
 ];
 const TYPING_SPEED = 38;
 const PAUSE_DURATION = 2800;
+
+type AudioBarsState = 'idle' | 'recording' | 'loading';
+
+function AudioBars({ state }: { state: AudioBarsState }) {
+    const getBarClass = (i: number) => {
+        if (state === 'recording') return `trk-bar--rec-${i}`;
+        if (state === 'loading') return `trk-bar--load-${i}`;
+        return `trk-bar--idle-${i}`;
+    };
+
+    return (
+        <div className="trk-bars-wrap">
+            {[0, 1, 2, 3].map((i) => (
+                <div key={i} className={`trk-bar ${getBarClass(i)}`} />
+            ))}
+        </div>
+    );
+}
 
 interface TrackerInputProps {
     onEntriesAdded: () => void;
@@ -163,6 +181,7 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                     reader.readAsDataURL(blob);
                 });
 
+                setIsRecording(false);
                 setIsLoading(true);
                 try {
                     const audioData = { inlineData: { data: base64.split(',')[1], mimeType: mimeType || 'audio/mp4' } };
@@ -371,12 +390,9 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                                         onClick={(e) => { e.stopPropagation(); toggleRecording(); }}
                                         disabled={isLoading}
                                         aria-label={isRecording ? 'Aufnahme stoppen' : 'Spracheingabe starten'}
-                                        className={`w-full h-full rounded-full transition-colors flex items-center justify-center ${isRecording ? 'bg-[#c4c3c0] text-red-500 animate-pulse' : 'bg-[#c4c3c0] hover:bg-[#b8b7b4] text-[#475569]'}`}
+                                        className="w-full h-full rounded-full bg-black flex items-center justify-center"
                                     >
-                                        {isLoading
-                                            ? <Loader2 className="animate-spin" size={20} strokeWidth={1.5} />
-                                            : <Mic size={20} strokeWidth={1.5} />
-                                        }
+                                        <AudioBars state={isLoading ? 'loading' : isRecording ? 'recording' : 'idle'} />
                                     </button>
                                 )}
                             </div>

@@ -94,7 +94,7 @@ body {
 
 .tracker-input-bar {
   padding-top: 8px;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 21px);
+  padding-bottom: calc(env(safe-area-inset-bottom) + 36px);
 }
 
 /* Tracker controls row enter animation */
@@ -112,3 +112,59 @@ body {
     transform: translateY(0);
   }
 }
+
+/* Tracker: AudioBars mic button — scaleY only (GPU composited, no layout/paint) */
+@keyframes trk-rec-0 {
+  0%, 100% { transform: scaleY(0.17); }
+  50%       { transform: scaleY(0.72); }
+}
+@keyframes trk-rec-1 {
+  0%, 100% { transform: scaleY(0.56); }
+  35%      { transform: scaleY(0.17); }
+  70%      { transform: scaleY(0.83); }
+}
+@keyframes trk-rec-2 {
+  0%, 100% { transform: scaleY(0.28); }
+  45%      { transform: scaleY(0.83); }
+  85%      { transform: scaleY(0.17); }
+}
+@keyframes trk-rec-3 {
+  0%, 100% { transform: scaleY(0.44); }
+  25%      { transform: scaleY(0.17); }
+  60%      { transform: scaleY(0.67); }
+}
+@keyframes trk-load {
+  0%, 60%, 100% { transform: scaleY(0.17); }
+  30%           { transform: scaleY(0.78); }
+}
+
+.trk-bars-wrap {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+}
+
+.trk-bar {
+  width: 3px;
+  height: 18px;
+  border-radius: 99px;
+  background-color: white;
+  transform-origin: center;
+  transition: transform 0.35s ease;
+}
+
+.trk-bar--idle-0 { transform: scaleY(0.50); }
+.trk-bar--idle-1 { transform: scaleY(0.95); }
+.trk-bar--idle-2 { transform: scaleY(0.72); }
+.trk-bar--idle-3 { transform: scaleY(0.39); }
+
+.trk-bar--rec-0 { animation: trk-rec-0 0.75s ease-in-out infinite; }
+.trk-bar--rec-1 { animation: trk-rec-1 1.05s ease-in-out infinite; }
+.trk-bar--rec-2 { animation: trk-rec-2 0.90s ease-in-out infinite; }
+.trk-bar--rec-3 { animation: trk-rec-3 0.65s ease-in-out infinite; }
+
+.trk-bar--load-0 { animation: trk-load 0.9s ease-in-out 0.00s infinite; }
+.trk-bar--load-1 { animation: trk-load 0.9s ease-in-out 0.15s infinite; }
+.trk-bar--load-2 { animation: trk-load 0.9s ease-in-out 0.30s infinite; }
+.trk-bar--load-3 { animation: trk-load 0.9s ease-in-out 0.45s infinite; }
