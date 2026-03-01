@@ -31,7 +31,7 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   return (
     <div className={isTracker ? 'min-h-screen bg-[#f0efed] relative z-10' : 'relative z-10'}>
       {!isTracker && <Navbar onNavigate={navigateTo} currentView={currentView} />}
-      <main className={isTracker ? 'pb-32' : ''}>{children}</main>
+      <main>{children}</main>
       {!isTracker && <Footer onNavigate={navigateTo} />}
     </div>
   )

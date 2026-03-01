@@ -4,7 +4,7 @@ import React, { useEffect, useState } from 'react';
 import MacroSummary from '@/components/tracker/MacroSummary';
 import TrackerInput from '@/components/tracker/TrackerInput';
 import EntryList from '@/components/tracker/EntryList';
-import { getNutritionEntries, addNutritionEntries, deleteNutritionEntry, NutritionEntry, getLocalDateString } from '@/services/nutritionService';
+import { getNutritionEntries, deleteNutritionEntry, NutritionEntry, getLocalDateString } from '@/services/nutritionService';
 import { Loader2 } from 'lucide-react';
 
 export default function TrackerPage() {
@@ -37,15 +37,6 @@ export default function TrackerPage() {
         }
     };
 
-    const handleAddEntries = async (newEntries: NutritionEntry[]) => {
-        try {
-            await addNutritionEntries(newEntries, dateStr);
-            await fetchEntries();
-        } catch (error) {
-            console.error("Failed to add entries:", error);
-        }
-    };
-
     const totalKcal = entries.reduce((acc, e) => acc + (e.kcal || 0), 0);
     const totalProtein = entries.reduce((acc, e) => acc + (e.protein || 0), 0);
     const totalFat = entries.reduce((acc, e) => acc + (e.fat || 0), 0);
@@ -70,7 +61,7 @@ export default function TrackerPage() {
     };
 
     return (
-        <div className="min-h-screen">
+        <div className="flex flex-col h-dvh">
             <MacroSummary
                 dateStr={dateStr}
                 kcal={totalKcal}
@@ -81,24 +72,26 @@ export default function TrackerPage() {
                 onNextDate={handleNextDate}
             />
 
-            {isLoading ? (
-                <div className="flex justify-center px-6 py-16">
-                    <Loader2 className="animate-spin text-[#94a3b8]" size={24} strokeWidth={1.5} />
-                </div>
-            ) : entries.length === 0 ? (
-                <div className="px-6 py-16">
-                    <p className="[font-family:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[0.275px] text-[#94a3b8]">
-                        Keine Einträge für diesen Tag.
-                    </p>
-                    {dateStr === getLocalDateString() && (
-                        <p className="[font-family:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[0.275px] text-[#94a3b8] mt-1">
-                            Erzähle mir, was du gegessen hast.
+            <div className="flex-1 overflow-y-auto">
+                {isLoading ? (
+                    <div className="flex justify-center px-6 py-16">
+                        <Loader2 className="animate-spin text-[#94a3b8]" size={24} strokeWidth={1.5} />
+                    </div>
+                ) : entries.length === 0 ? (
+                    <div className="px-6 py-16">
+                        <p className="[font-family:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[0.275px] text-[#94a3b8]">
+                            Keine Einträge für diesen Tag.
                         </p>
-                    )}
-                </div>
-            ) : (
-                <EntryList entries={entries} onDelete={handleDelete} onAddEntries={handleAddEntries} />
-            )}
+                        {dateStr === getLocalDateString() && (
+                            <p className="[font-family:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[0.275px] text-[#94a3b8] mt-1">
+                                Erzähle mir, was du gegessen hast.
+                            </p>
+                        )}
+                    </div>
+                ) : (
+                    <EntryList entries={entries} onDelete={handleDelete} />
+                )}
+            </div>
 
             <TrackerInput onEntriesAdded={fetchEntries} selectedDate={dateStr} />
         </div>

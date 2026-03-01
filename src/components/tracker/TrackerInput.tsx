@@ -1,9 +1,9 @@
 "use client"
 
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Camera, CameraOff, Loader2 } from 'lucide-react';
+import { Send, Camera, CameraOff, Loader2, Plus, Clock, Check, X } from 'lucide-react';
 import { parseNutritionText, parseNutritionImage } from '@/services/geminiNutrition';
-import { addNutritionEntries, NutritionEntry } from '@/services/nutritionService';
+import { addNutritionEntries, getRecentEntries, NutritionEntry } from '@/services/nutritionService';
 
 const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -49,8 +49,8 @@ const compressImage = (file: File): Promise<string> => {
 };
 
 const PLACEHOLDERS = [
-    '> Add entry...',
-    '> 2 Eier, Spiegelei...',
+    '> Eintrag hinzufügen...',
+    '> 2 Eier, Vollkornbrot...',
     '> 150g Hähnchen...',
     '> Haferflocken mit Milch...',
     '> Protein Shake 30g...',
@@ -98,6 +98,15 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
     const [placeholderIndex, setPlaceholderIndex] = useState(0);
     const [displayedPlaceholder, setDisplayedPlaceholder] = useState('');
 
+    // Special functions menu
+    const [showSpecialMenu, setShowSpecialMenu] = useState(false);
+
+    // History panel
+    const [showHistory, setShowHistory] = useState(false);
+    const [historyEntries, setHistoryEntries] = useState<NutritionEntry[]>([]);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
+
     const hasText = text.trim().length > 0;
     const isExpanded = isActive || hasText;
 
@@ -133,13 +142,14 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
         };
     }, [placeholderIndex, isExpanded, capturedImage]);
 
-    // Click outside collapses only when text is empty
+    // Click outside collapses input and closes special menu
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
             if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
                 if (!hasText) {
                     setIsActive(false);
                 }
+                setShowSpecialMenu(false);
             }
         };
         document.addEventListener('mousedown', handleClickOutside);
@@ -254,9 +264,66 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
         }
     };
 
+    const handleHistoryOpen = async () => {
+        if (showHistory) {
+            setShowHistory(false);
+            return;
+        }
+        setShowHistory(true);
+        setHistoryLoading(true);
+        setSelectedItems(new Set());
+        try {
+            const recent = await getRecentEntries(14);
+            const seen = new Set<string>();
+            const deduped = recent.filter(e => {
+                const key = e.foodDesc.toLowerCase().trim();
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            });
+            setHistoryEntries(deduped);
+        } catch (e) {
+            console.error('Failed to load history', e);
+            setHistoryEntries([]);
+        } finally {
+            setHistoryLoading(false);
+        }
+    };
+
+    const toggleHistoryItem = (foodDesc: string) => {
+        setSelectedItems(prev => {
+            const next = new Set(prev);
+            const key = foodDesc.toLowerCase().trim();
+            if (next.has(key)) {
+                next.delete(key);
+            } else {
+                next.add(key);
+            }
+            return next;
+        });
+    };
+
+    const handleAddSelected = async () => {
+        const toAdd = historyEntries
+            .filter(e => selectedItems.has(e.foodDesc.toLowerCase().trim()))
+            .map(({ id: _id, timestamp: _ts, ...rest }) => rest);
+
+        if (toAdd.length === 0) return;
+
+        try {
+            await addNutritionEntries(toAdd, selectedDate);
+            onEntriesAdded();
+        } catch (e) {
+            console.error('Failed to add history entries', e);
+        }
+
+        setShowHistory(false);
+        setSelectedItems(new Set());
+    };
+
     return (
         <div
-            className="fixed bottom-0 left-0 right-0 bg-[#f0efed] z-50"
+            className="bg-[#f0efed]"
             ref={containerRef}
         >
             <input
@@ -270,6 +337,74 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
             />
 
             <div className="tracker-input-bar px-4">
+                {/* History panel */}
+                {showHistory && (
+                    <div className="flex flex-col gap-4 border border-[#e2e8f0] rounded-2xl p-4 mb-3 max-h-64 overflow-y-auto">
+                        <div className="flex items-center justify-between">
+                            <span className="[font-family:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[1.1px] text-[#475569]">
+                                Letzte Einträge
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => { setShowHistory(false); setSelectedItems(new Set()); }}
+                                aria-label="Verlauf schließen"
+                                className="text-[#94a3b8] hover:text-[#475569] transition-colors"
+                            >
+                                <X size={13} strokeWidth={2} />
+                            </button>
+                        </div>
+
+                        {historyLoading ? (
+                            <p className="[font-family:var(--font-ibm-plex-mono)] text-[11px] text-[#94a3b8] uppercase tracking-[0.5px]">
+                                Lade Verlauf...
+                            </p>
+                        ) : historyEntries.length === 0 ? (
+                            <p className="[font-family:var(--font-ibm-plex-mono)] text-[11px] text-[#94a3b8] uppercase tracking-[0.5px]">
+                                Keine Einträge in den letzten 14 Tagen.
+                            </p>
+                        ) : (
+                            <>
+                                <div className="flex flex-col gap-4">
+                                    {historyEntries.map((entry, idx) => {
+                                        const key = entry.foodDesc.toLowerCase().trim();
+                                        const isSelected = selectedItems.has(key);
+                                        return (
+                                            <button
+                                                key={idx}
+                                                type="button"
+                                                onClick={() => toggleHistoryItem(entry.foodDesc)}
+                                                className="flex items-start gap-3 text-left w-full"
+                                            >
+                                                <div className={`mt-[3px] shrink-0 w-[11px] h-[11px] border flex items-center justify-center transition-colors ${isSelected ? 'border-[#111] bg-[#111]' : 'border-[#94a3b8]'}`}>
+                                                    {isSelected && <Check size={7} strokeWidth={3} className="text-white" />}
+                                                </div>
+                                                <div className="flex flex-col gap-[2px]">
+                                                    <span className={`[font-family:var(--font-ibm-plex-mono)] text-[13px] font-semibold leading-[17px] transition-colors ${isSelected ? 'text-[#0f172a]' : 'text-[#475569]'}`}>
+                                                        {entry.foodDesc}
+                                                    </span>
+                                                    <span className="[font-family:var(--font-ibm-plex-mono)] text-[11px] text-[#94a3b8] leading-[16px]">
+                                                        {entry.kcal} kcal, {entry.carbs}g Carbs, {entry.protein}g Protein, {entry.fat}g Fett
+                                                    </span>
+                                                </div>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+
+                                {selectedItems.size > 0 && (
+                                    <button
+                                        type="button"
+                                        onClick={handleAddSelected}
+                                        className="[font-family:var(--font-ibm-plex-mono)] text-[11px] uppercase tracking-[1.1px] text-[#111] self-start"
+                                    >
+                                        &gt; {selectedItems.size} Eintrag{selectedItems.size !== 1 ? 'e' : ''} hinzufügen
+                                    </button>
+                                )}
+                            </>
+                        )}
+                    </div>
+                )}
+
                 {capturedImage ? (
                     /* Image mode */
                     <div className="border border-[#cbd5e1] rounded-2xl px-4 py-3 flex flex-col gap-3">
@@ -315,25 +450,54 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                     </div>
                 ) : (
                     /* Chat input — expands when active or has text */
+                    <div className="relative">
+                        {/* Popup buttons — outside overflow-hidden pill so they aren't clipped */}
+                        <div className={`absolute bottom-full left-0 mb-2 w-[53px] flex flex-col gap-2 items-center transition-all duration-200 z-10 ${showSpecialMenu ? 'opacity-100 pointer-events-auto translate-y-0' : 'opacity-0 pointer-events-none translate-y-1'}`}>
+                            {/* History button — top */}
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleHistoryOpen(); setShowSpecialMenu(false); }}
+                                aria-label="Verlauf anzeigen"
+                                className="w-[44px] h-[44px] rounded-full bg-black hover:bg-zinc-700 text-white transition-colors flex items-center justify-center"
+                            >
+                                <Clock size={18} strokeWidth={1.5} />
+                            </button>
+                            {/* Camera button — bottom */}
+                            <button
+                                type="button"
+                                onClick={(e) => { e.stopPropagation(); handleCameraClick(); setShowSpecialMenu(false); }}
+                                aria-label="Foto aufnehmen"
+                                className="w-[44px] h-[44px] rounded-full bg-black hover:bg-zinc-700 text-white transition-colors flex items-center justify-center"
+                            >
+                                <Camera size={18} strokeWidth={1.5} />
+                            </button>
+                        </div>
+
                     <div
-                        className={`border border-[#cbd5e1] overflow-hidden transition-[border-radius] duration-200 ${isExpanded ? 'rounded-[20px]' : 'rounded-full'}`}
+                        className="border border-[#cbd5e1] overflow-hidden rounded-full"
                         onClick={() => {
                             setIsActive(true);
                             textareaRef.current?.focus();
                         }}
                     >
-                        {/* Input row — items-stretch so circles size dynamically to the pill height */}
+                        {/* Input row */}
                         <div className="flex items-stretch">
-                            {/* Camera — aspect-square stretches to pill height, overflow-hidden on pill does the corner clipping */}
-                            <button
-                                type="button"
-                                onClick={(e) => { e.stopPropagation(); handleCameraClick(); }}
-                                disabled={isLoading}
-                                aria-label="Foto aufnehmen"
-                                className="w-[53px] flex-none rounded-full bg-[#e4e3e0] hover:bg-[#d9d8d5] text-[#475569] transition-colors flex items-center justify-center"
-                            >
-                                <Camera size={20} strokeWidth={1.5} />
-                            </button>
+                            {/* Special functions button */}
+                            <div className="w-[53px] flex-none self-stretch flex">
+                                <button
+                                    type="button"
+                                    onClick={(e) => { e.stopPropagation(); setShowSpecialMenu(prev => !prev); }}
+                                    disabled={isLoading}
+                                    aria-label="Sonderfunktionen"
+                                    className="w-full h-full rounded-full bg-[#e4e3e0] hover:bg-[#d9d8d5] text-[#475569] transition-colors flex items-center justify-center"
+                                >
+                                    <Plus
+                                        size={20}
+                                        strokeWidth={1.5}
+                                        className={`transition-transform duration-200 ${showSpecialMenu ? 'rotate-45' : ''}`}
+                                    />
+                                </button>
+                            </div>
 
                             {/* Textarea */}
                             <textarea
@@ -369,7 +533,7 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                                 className="flex-1 bg-transparent [font-family:var(--font-ibm-plex-mono)] text-[14px] text-[#111] placeholder-[#94a3b8] outline-none resize-none overflow-hidden leading-[1.5] py-[16px] px-3"
                             />
 
-                            {/* Right slot — same aspect-square logic; mic fills it fully, send is centered */}
+                            {/* Right slot */}
                             <div className="w-[53px] flex-none flex items-center justify-center">
                                 {hasText ? (
                                     <button
@@ -377,7 +541,7 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                                         onClick={(e) => { e.stopPropagation(); handleSubmit(); }}
                                         disabled={isLoading}
                                         aria-label="Absenden"
-                                        className="bg-black hover:bg-zinc-700 text-white transition-colors flex items-center justify-center w-[34px] h-[34px] rounded-full"
+                                        className="bg-black hover:bg-zinc-700 text-white transition-colors flex items-center justify-center w-full h-full rounded-full"
                                     >
                                         {isLoading
                                             ? <Loader2 className="animate-spin" size={14} strokeWidth={2} />
@@ -398,6 +562,7 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                             </div>
                         </div>
 
+                    </div>
                     </div>
                 )}
             </div>

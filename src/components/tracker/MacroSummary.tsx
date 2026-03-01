@@ -1,7 +1,7 @@
 "use client"
 
 import React from 'react';
-import { ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Calendar, ChefHat } from 'lucide-react';
 import Link from 'next/link';
 
 interface MacroSummaryProps {
@@ -22,10 +22,10 @@ const MacroBar = ({ label, current, max, unit }: { label: string; current: numbe
     return (
         <div className="flex flex-col gap-1 w-full">
             <div className="flex items-end justify-between pb-1">
-                <span className={`[font-family:var(--font-ibm-plex-mono)] text-[11px] font-semibold tracking-[1.1px] uppercase ${isOver ? 'text-red-800' : 'text-[#111]'}`}>
+                <span className={`[font-family:var(--font-ibm-plex-mono)] text-[11px] font-semibold tracking-[1.1px] uppercase ${isOver ? 'text-[#E10E14]' : 'text-[#111]'}`}>
                     {label}
                 </span>
-                <span className={`[font-family:var(--font-ibm-plex-mono)] text-[12px] font-medium ${isOver ? 'text-red-800' : 'text-[#111]'}`}>
+                <span className={`[font-family:var(--font-ibm-plex-mono)] text-[12px] font-medium ${isOver ? 'text-[#E10E14]' : 'text-[#111]'}`}>
                     {current}{unit} / {max}{unit}
                 </span>
             </div>
@@ -38,7 +38,7 @@ const MacroBar = ({ label, current, max, unit }: { label: string; current: numbe
                 {/* Overflow indicator: dark red bar restarting from left */}
                 {isOver && (
                     <div
-                        className="absolute top-0 bottom-0 left-0 bg-red-900 transition-all duration-1000 ease-out"
+                        className="absolute top-0 bottom-0 left-0 bg-[#E10E14] transition-all duration-1000 ease-out"
                         style={{ right: `${100 - overflowProgress}%` }}
                     />
                 )}
@@ -94,8 +94,12 @@ export default function MacroSummary({ dateStr, kcal, protein, fat, carbs, onPre
                         </button>
                     </div>
 
-                    {/* Spacer to balance calendar icon */}
-                    <div className="w-[26px]" />
+                    <Link
+                        href="/tracker/rezepte"
+                        className="p-1 text-[#475569] hover:text-[#111] transition-colors"
+                    >
+                        <ChefHat size={18} strokeWidth={1.5} />
+                    </Link>
                 </div>
             </div>
 

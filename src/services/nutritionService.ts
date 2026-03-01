@@ -66,7 +66,7 @@ export async function getRecentEntries(daysBack: number = 14): Promise<Nutrition
     const today = new Date();
     const dateStrings: string[] = [];
 
-    for (let i = 1; i <= daysBack; i++) {
+    for (let i = 0; i <= daysBack; i++) {
         const d = new Date(today);
         d.setDate(d.getDate() - i);
         const year = d.getFullYear();
@@ -85,4 +85,52 @@ export async function getRecentEntries(daysBack: number = 14): Promise<Nutrition
     }
 
     return allEntries.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+}
+
+// ─── Saved Recipes ────────────────────────────────────────────────────────────
+
+export interface SavedRecipe {
+    id?: string;
+    title: string;
+    ingredients: string[];
+    fullIngredients: { amount: string; measurement?: string; name: string }[];
+    steps: string[];
+    macros: { kcal: number; protein: number; carbs: number; fat: number };
+    macroEntries: { foodDesc: string; protein: number; fat: number; carbs: number; kcal: number }[];
+    timestamp?: number;
+}
+
+export async function saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'timestamp'>): Promise<void> {
+    const recipesRef = ref(db, `saved_recipes/${DEFAULT_USER}`);
+    const newRef = push(recipesRef);
+    await set(newRef, { ...recipe, timestamp: serverTimestamp() });
+}
+
+export async function deleteRecipe(recipeId: string): Promise<void> {
+    const recipeRef = ref(db, `saved_recipes/${DEFAULT_USER}/${recipeId}`);
+    await remove(recipeRef);
+}
+
+export async function getSavedRecipes(): Promise<SavedRecipe[]> {
+    const recipesRef = ref(db, `saved_recipes/${DEFAULT_USER}`);
+    const snapshot = await get(recipesRef);
+
+    if (snapshot.exists()) {
+        const data = snapshot.val() as Record<string, any>;
+        const toArr = (v: any): any[] => Array.isArray(v) ? v : Object.values(v || {});
+        return Object.keys(data)
+            .map(key => {
+                const r = data[key];
+                return {
+                    id: key,
+                    ...r,
+                    ingredients: toArr(r.ingredients),
+                    fullIngredients: toArr(r.fullIngredients),
+                    steps: toArr(r.steps),
+                    macroEntries: toArr(r.macroEntries),
+                } as SavedRecipe;
+            })
+            .sort((a, b) => ((b.timestamp as number) || 0) - ((a.timestamp as number) || 0));
+    }
+    return [];
 }
