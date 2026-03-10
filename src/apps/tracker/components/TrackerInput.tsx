@@ -323,7 +323,7 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
 
     return (
         <div
-            className="bg-[#f0efed]"
+            className="bg-[#f0efed] pb-[max(16px,env(safe-area-inset-bottom))] pt-2"
             ref={containerRef}
         >
             <input
@@ -473,96 +473,96 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                             </button>
                         </div>
 
-                    <div
-                        className="border border-[#cbd5e1] overflow-hidden rounded-full"
-                        onClick={() => {
-                            setIsActive(true);
-                            textareaRef.current?.focus();
-                        }}
-                    >
-                        {/* Input row */}
-                        <div className="flex items-stretch">
-                            {/* Special functions button */}
-                            <div className="w-[53px] flex-none self-stretch flex">
-                                <button
-                                    type="button"
-                                    onClick={(e) => { e.stopPropagation(); setShowSpecialMenu(prev => !prev); }}
-                                    disabled={isLoading}
-                                    aria-label="Sonderfunktionen"
-                                    className="w-full h-full rounded-full bg-[#e4e3e0] hover:bg-[#d9d8d5] text-[#475569] transition-colors flex items-center justify-center"
-                                >
-                                    <Plus
-                                        size={20}
-                                        strokeWidth={1.5}
-                                        className={`transition-transform duration-200 ${showSpecialMenu ? 'rotate-45' : ''}`}
-                                    />
-                                </button>
-                            </div>
-
-                            {/* Textarea */}
-                            <textarea
-                                ref={textareaRef}
-                                rows={1}
-                                value={text}
-                                onChange={(e) => {
-                                    setText(e.target.value);
-                                    const el = textareaRef.current;
-                                    if (el) {
-                                        el.style.height = 'auto';
-                                        el.style.height = `${el.scrollHeight}px`;
-                                    }
-                                }}
-                                onFocus={() => setIsActive(true)}
-                                onBlur={() => {
-                                    if (!hasText) {
-                                        setTimeout(() => {
-                                            if (!containerRef.current?.contains(document.activeElement)) {
-                                                setIsActive(false);
-                                            }
-                                        }, 150);
-                                    }
-                                }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSubmit();
-                                    }
-                                }}
-                                placeholder={isExpanded ? '> Add entry...' : displayedPlaceholder}
-                                disabled={isLoading}
-                                className="flex-1 bg-transparent [font-family:var(--font-ibm-plex-mono)] text-[14px] text-[#111] placeholder-[#94a3b8] outline-none resize-none overflow-hidden leading-[1.5] py-[16px] px-3"
-                            />
-
-                            {/* Right slot */}
-                            <div className="w-[53px] flex-none flex items-center justify-center">
-                                {hasText ? (
+                        <div
+                            className={`border overflow-hidden rounded-[26px] bg-white transition-all duration-200 ease-out shadow-[0_-4px_20px_rgba(0,0,0,0.03)] ${isActive ? 'border-[#111] shadow-[0_0_0_1px_#111]' : 'border-[#cbd5e1]'}`}
+                            onClick={() => {
+                                setIsActive(true);
+                                textareaRef.current?.focus();
+                            }}
+                        >
+                            {/* Input row */}
+                            <div className="flex items-end min-h-[53px]">
+                                {/* Special functions button */}
+                                <div className="w-[53px] h-[53px] flex-none flex items-center justify-center">
                                     <button
                                         type="button"
-                                        onClick={(e) => { e.stopPropagation(); handleSubmit(); }}
+                                        onClick={(e) => { e.stopPropagation(); setShowSpecialMenu(prev => !prev); }}
                                         disabled={isLoading}
-                                        aria-label="Absenden"
-                                        className="bg-black hover:bg-zinc-700 text-white transition-colors flex items-center justify-center w-full h-full rounded-full"
+                                        aria-label="Sonderfunktionen"
+                                        className="w-[38px] h-[38px] rounded-full bg-[#e4e3e0] hover:bg-[#d9d8d5] text-[#475569] transition-colors flex items-center justify-center shrink-0"
                                     >
-                                        {isLoading
-                                            ? <Loader2 className="animate-spin" size={14} strokeWidth={2} />
-                                            : <Send size={14} strokeWidth={2} />
+                                        <Plus
+                                            size={20}
+                                            strokeWidth={1.5}
+                                            className={`transition-transform duration-200 ${showSpecialMenu ? 'rotate-45' : ''}`}
+                                        />
+                                    </button>
+                                </div>
+
+                                {/* Textarea */}
+                                <textarea
+                                    ref={textareaRef}
+                                    rows={1}
+                                    value={text}
+                                    onChange={(e) => {
+                                        setText(e.target.value);
+                                        const el = textareaRef.current;
+                                        if (el) {
+                                            el.style.height = 'auto';
+                                            el.style.height = `${Math.min(el.scrollHeight, 120)}px`;
                                         }
-                                    </button>
-                                ) : (
-                                    <button
-                                        type="button"
-                                        onClick={(e) => { e.stopPropagation(); toggleRecording(); }}
-                                        disabled={isLoading}
-                                        aria-label={isRecording ? 'Aufnahme stoppen' : 'Spracheingabe starten'}
-                                        className="w-full h-full rounded-full bg-black flex items-center justify-center"
-                                    >
-                                        <AudioBars state={isLoading ? 'loading' : isRecording ? 'recording' : 'idle'} />
-                                    </button>
-                                )}
-                            </div>
-                        </div>
+                                    }}
+                                    onFocus={() => setIsActive(true)}
+                                    onBlur={() => {
+                                        if (!hasText) {
+                                            setTimeout(() => {
+                                                if (!containerRef.current?.contains(document.activeElement)) {
+                                                    setIsActive(false);
+                                                }
+                                            }, 150);
+                                        }
+                                    }}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                            e.preventDefault();
+                                            handleSubmit();
+                                        }
+                                    }}
+                                    placeholder={isExpanded ? '> Eintrag hinzufügen...' : displayedPlaceholder}
+                                    disabled={isLoading}
+                                    className="flex-1 bg-transparent [font-family:var(--font-ibm-plex-mono)] text-[14px] text-[#111] placeholder-[#94a3b8] outline-none resize-none overflow-y-auto leading-[1.5] py-[16px] px-1 max-h-[120px] transition-[height] duration-150 ease-out [&::-webkit-scrollbar]:hidden"
+                                />
 
-                    </div>
+                                {/* Right slot */}
+                                <div className="w-[53px] h-[53px] flex-none flex items-center justify-center">
+                                    {hasText ? (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); handleSubmit(); }}
+                                            disabled={isLoading}
+                                            aria-label="Absenden"
+                                            className="w-[38px] h-[38px] rounded-full bg-black hover:bg-zinc-700 text-white transition-colors flex items-center justify-center shrink-0"
+                                        >
+                                            {isLoading
+                                                ? <Loader2 className="animate-spin" size={14} strokeWidth={2} />
+                                                : <Send size={14} strokeWidth={2} className="relative -ml-[2px]" />
+                                            }
+                                        </button>
+                                    ) : (
+                                        <button
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); toggleRecording(); }}
+                                            disabled={isLoading}
+                                            aria-label={isRecording ? 'Aufnahme stoppen' : 'Spracheingabe starten'}
+                                            className="w-[38px] h-[38px] rounded-full bg-black flex items-center justify-center shrink-0"
+                                        >
+                                            <AudioBars state={isLoading ? 'loading' : isRecording ? 'recording' : 'idle'} />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                        </div>
                     </div>
                 )}
             </div>

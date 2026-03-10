@@ -100,10 +100,11 @@ export interface SavedRecipe {
     timestamp?: number;
 }
 
-export async function saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'timestamp'>): Promise<void> {
+export async function saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'timestamp'>): Promise<string> {
     const recipesRef = ref(db, `saved_recipes/${DEFAULT_USER}`);
     const newRef = push(recipesRef);
     await set(newRef, { ...recipe, timestamp: serverTimestamp() });
+    return newRef.key!;
 }
 
 export async function deleteRecipe(recipeId: string): Promise<void> {

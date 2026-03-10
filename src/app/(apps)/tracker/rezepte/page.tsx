@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight, Loader2, Settings, X } from 'lucide-react';
+import { Bookmark, ChevronLeft, ChevronRight, Loader2, Settings, X } from 'lucide-react';
 import RecipeInput from '@/apps/tracker/components/RecipeInput';
 import {
     generateRecipeSuggestions,
@@ -159,6 +159,9 @@ export default function RezeptePage() {
     const [savedRecipes, setSavedRecipes] = useState<SavedRecipe[]>([]);
     const [isSavedLoading, setIsSavedLoading] = useState(true);
 
+    const [isBookmarked, setIsBookmarked] = useState(false);
+    const [currentSavedId, setCurrentSavedId] = useState<string | null>(null);
+
     const [showSettings, setShowSettings] = useState(false);
     const [preferences, setPreferences] = useState('');
     const [draftPreferences, setDraftPreferences] = useState('');
@@ -243,6 +246,8 @@ export default function RezeptePage() {
         setMacroEntries(r.macroEntries as NutritionEntry[]);
         setSelectedSuggestion({ title: r.title, ingredients: r.ingredients });
         setIsFromSaved(true);
+        setIsBookmarked(true);
+        setCurrentSavedId(r.id ?? null);
         setPortions(1);
         setPageState('recipe');
     };
@@ -252,8 +257,42 @@ export default function RezeptePage() {
         setRecipe(null);
         setMacroEntries(null);
         setIsFromSaved(false);
+        setIsBookmarked(false);
+        setCurrentSavedId(null);
         setPortions(1);
         setPageState(wasFromSaved ? 'idle' : 'suggestions');
+    };
+
+    const handleToggleBookmark = async () => {
+        if (!recipe || !selectedSuggestion) return;
+        if (isBookmarked && currentSavedId) {
+            try {
+                await deleteRecipe(currentSavedId);
+                setSavedRecipes(prev => prev.filter(r => r.id !== currentSavedId));
+                setIsBookmarked(false);
+                setCurrentSavedId(null);
+            } catch (err) {
+                console.error('Delete recipe error:', err);
+            }
+        } else {
+            try {
+                const cleanEntries = (macroEntries ?? []).map(({ id: _id, timestamp: _ts, ...rest }) => rest);
+                const newId = await saveRecipe({
+                    title: recipe.title,
+                    ingredients: selectedSuggestion.ingredients,
+                    fullIngredients: recipe.ingredients,
+                    steps: recipe.steps,
+                    macros: totalMacros ?? { kcal: 0, protein: 0, carbs: 0, fat: 0 },
+                    macroEntries: cleanEntries,
+                });
+                setCurrentSavedId(newId);
+                setIsBookmarked(true);
+                const updated = await getSavedRecipes();
+                setSavedRecipes(updated);
+            } catch (err) {
+                console.error('Save recipe error:', err);
+            }
+        }
     };
 
     const handleCalculateMacros = async () => {
@@ -281,9 +320,10 @@ export default function RezeptePage() {
         if (!macroEntries || !totalMacros || !recipe || !selectedSuggestion) return;
         setIsAddingToTracker(true);
         try {
-            await addNutritionEntries(macroEntries, getLocalDateString());
+            const relevantEntries = macroEntries.filter(e => (e.kcal || 0) > 10);
+            await addNutritionEntries(relevantEntries, getLocalDateString());
 
-            if (!isFromSaved) {
+            if (!isFromSaved && !isBookmarked) {
                 const cleanEntries = macroEntries.map(({ id: _id, timestamp: _ts, ...rest }) => rest);
                 await saveRecipe({
                     title: recipe.title,
@@ -381,14 +421,25 @@ export default function RezeptePage() {
                         Rezepte
                     </h2>
 
-                    <button
-                        type="button"
-                        onClick={handleOpenSettings}
-                        aria-label="Einstellungen öffnen"
-                        className="p-1 text-[#475569] hover:text-[#111] transition-colors"
-                    >
-                        <Settings size={18} strokeWidth={1.5} />
-                    </button>
+                    {pageState === 'recipe' ? (
+                        <button
+                            type="button"
+                            onClick={handleToggleBookmark}
+                            aria-label={isBookmarked ? 'Lesezeichen entfernen' : 'Rezept speichern'}
+                            className="p-1 text-[#475569] hover:text-[#111] transition-colors"
+                        >
+                            <Bookmark size={18} strokeWidth={1.5} fill={isBookmarked ? 'currentColor' : 'none'} />
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            onClick={handleOpenSettings}
+                            aria-label="Einstellungen öffnen"
+                            className="p-1 text-[#475569] hover:text-[#111] transition-colors"
+                        >
+                            <Settings size={18} strokeWidth={1.5} />
+                        </button>
+                    )}
                 </div>
             </div>
 

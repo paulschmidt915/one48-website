@@ -49,7 +49,7 @@ REGELN:
 - amount ist IMMER eine reine Zahl (z.B. '200', '2', '0.5') ODER '-'. NIEMALS Einheit in amount!
 - measurement enthält NUR die Einheit (z.B. 'g', 'ml', 'EL'). Bei amount '-' ist measurement ''.
 - Zutatenliste vollständig und präzise mit Mengenangaben für eine Portion. Nur notwendige Zutaten.
-- Schritte klar und nachvollziehbar formuliert, jeder Schritt ein vollständiger Satz.
+- Schritte extrem kompakt formuliert: nur das Wesentliche, keine Füllwörter, keine Wiederholungen. Maximal 1-2 kurze Sätze pro Schritt. Imperativ-Stil (z.B. "Zwiebeln würfeln. In Öl 3 Min. anbraten.").
 - Berücksichtige den ursprünglichen Nutzerwunsch (Portionsanzahl, Zutaten-Vorgaben, Makro-Ziele).
 - Alle Texte auf Deutsch.
 `;
