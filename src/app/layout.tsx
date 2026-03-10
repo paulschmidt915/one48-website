@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Space_Grotesk } from 'next/font/google'
 import './globals.css'
-import SiteShell from '@/components/SiteShell'
+import SiteShell from '@/apps/agency/components/SiteShell'
 import { Analytics } from "@vercel/analytics/next"
 
 export const viewport: Viewport = {

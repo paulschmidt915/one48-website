@@ -1,0 +1,4 @@
+/* Agency-specific styles
+ * Import this file in src/app/(agency)/layout.tsx when adding agency-specific styles.
+ * Use this for styles that only apply to the one48 Agency website (/, /contact, /legal).
+ */

@@ -1,0 +1,4 @@
+/* Tracker-specific styles
+ * Import this file in src/app/(apps)/tracker/layout.tsx when adding tracker-specific styles.
+ * Use this for styles that only apply to the one48 Tracker app (/tracker, /tracker/rezepte, /tracker/week).
+ */

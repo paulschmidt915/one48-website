@@ -1,0 +1,4 @@
+/* Planner-specific styles
+ * Import this file in src/app/(apps)/layout.tsx (or a dedicated planner layout) when adding planner-specific styles.
+ * Use this for styles that only apply to the one48 Planner app (/privat, /planner).
+ */
