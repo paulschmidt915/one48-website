@@ -17,8 +17,8 @@
   --font-body: var(--font-inter), sans-serif;
   --font-display: var(--font-space-grotesk), sans-serif;
 
-  --background-image-gradient-glow-light: linear-gradient(135deg, rgba(37,99,235,0.1) 0%, rgba(234,88,12,0.1) 100%);
-  --background-image-gradient-glow-dark: linear-gradient(135deg, rgba(37,99,235,0.15) 0%, rgba(234,88,12,0.15) 100%);
+  --background-image-gradient-glow-light: linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(234, 88, 12, 0.1) 100%);
+  --background-image-gradient-glow-dark: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(234, 88, 12, 0.15) 100%);
 }
 
 html {
@@ -94,7 +94,6 @@ body {
 
 .tracker-input-bar {
   padding-top: 8px;
-  padding-bottom: calc(env(safe-area-inset-bottom) + 36px);
 }
 
 /* Tracker controls row enter animation */
@@ -107,6 +106,7 @@ body {
     opacity: 0;
     transform: translateY(6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -115,27 +115,76 @@ body {
 
 /* Tracker: AudioBars mic button — scaleY only (GPU composited, no layout/paint) */
 @keyframes trk-rec-0 {
-  0%, 100% { transform: scaleY(0.17); }
-  50%       { transform: scaleY(0.72); }
+
+  0%,
+  100% {
+    transform: scaleY(0.17);
+  }
+
+  50% {
+    transform: scaleY(0.72);
+  }
 }
+
 @keyframes trk-rec-1 {
-  0%, 100% { transform: scaleY(0.56); }
-  35%      { transform: scaleY(0.17); }
-  70%      { transform: scaleY(0.83); }
+
+  0%,
+  100% {
+    transform: scaleY(0.56);
+  }
+
+  35% {
+    transform: scaleY(0.17);
+  }
+
+  70% {
+    transform: scaleY(0.83);
+  }
 }
+
 @keyframes trk-rec-2 {
-  0%, 100% { transform: scaleY(0.28); }
-  45%      { transform: scaleY(0.83); }
-  85%      { transform: scaleY(0.17); }
+
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+
+  45% {
+    transform: scaleY(0.83);
+  }
+
+  85% {
+    transform: scaleY(0.17);
+  }
 }
+
 @keyframes trk-rec-3 {
-  0%, 100% { transform: scaleY(0.44); }
-  25%      { transform: scaleY(0.17); }
-  60%      { transform: scaleY(0.67); }
+
+  0%,
+  100% {
+    transform: scaleY(0.44);
+  }
+
+  25% {
+    transform: scaleY(0.17);
+  }
+
+  60% {
+    transform: scaleY(0.67);
+  }
 }
+
 @keyframes trk-load {
-  0%, 60%, 100% { transform: scaleY(0.17); }
-  30%           { transform: scaleY(0.78); }
+
+  0%,
+  60%,
+  100% {
+    transform: scaleY(0.17);
+  }
+
+  30% {
+    transform: scaleY(0.78);
+  }
 }
 
 .trk-bars-wrap {
@@ -154,17 +203,50 @@ body {
   transition: transform 0.35s ease;
 }
 
-.trk-bar--idle-0 { transform: scaleY(0.50); }
-.trk-bar--idle-1 { transform: scaleY(0.95); }
-.trk-bar--idle-2 { transform: scaleY(0.72); }
-.trk-bar--idle-3 { transform: scaleY(0.39); }
+.trk-bar--idle-0 {
+  transform: scaleY(0.50);
+}
 
-.trk-bar--rec-0 { animation: trk-rec-0 0.75s ease-in-out infinite; }
-.trk-bar--rec-1 { animation: trk-rec-1 1.05s ease-in-out infinite; }
-.trk-bar--rec-2 { animation: trk-rec-2 0.90s ease-in-out infinite; }
-.trk-bar--rec-3 { animation: trk-rec-3 0.65s ease-in-out infinite; }
+.trk-bar--idle-1 {
+  transform: scaleY(0.95);
+}
 
-.trk-bar--load-0 { animation: trk-load 0.9s ease-in-out 0.00s infinite; }
-.trk-bar--load-1 { animation: trk-load 0.9s ease-in-out 0.15s infinite; }
-.trk-bar--load-2 { animation: trk-load 0.9s ease-in-out 0.30s infinite; }
-.trk-bar--load-3 { animation: trk-load 0.9s ease-in-out 0.45s infinite; }
+.trk-bar--idle-2 {
+  transform: scaleY(0.72);
+}
+
+.trk-bar--idle-3 {
+  transform: scaleY(0.39);
+}
+
+.trk-bar--rec-0 {
+  animation: trk-rec-0 0.75s ease-in-out infinite;
+}
+
+.trk-bar--rec-1 {
+  animation: trk-rec-1 1.05s ease-in-out infinite;
+}
+
+.trk-bar--rec-2 {
+  animation: trk-rec-2 0.90s ease-in-out infinite;
+}
+
+.trk-bar--rec-3 {
+  animation: trk-rec-3 0.65s ease-in-out infinite;
+}
+
+.trk-bar--load-0 {
+  animation: trk-load 0.9s ease-in-out 0.00s infinite;
+}
+
+.trk-bar--load-1 {
+  animation: trk-load 0.9s ease-in-out 0.15s infinite;
+}
+
+.trk-bar--load-2 {
+  animation: trk-load 0.9s ease-in-out 0.30s infinite;
+}
+
+.trk-bar--load-3 {
+  animation: trk-load 0.9s ease-in-out 0.45s infinite;
+}

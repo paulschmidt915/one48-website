@@ -142,6 +142,36 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
         };
     }, [placeholderIndex, isExpanded, capturedImage]);
 
+    // iOS PWA Keyboard Handling via VisualViewport API
+    const [keyboardPadding, setKeyboardPadding] = useState('calc(env(safe-area-inset-bottom) + 16px)');
+
+    useEffect(() => {
+        if (!window.visualViewport) return;
+
+        const handleResize = () => {
+            const vp = window.visualViewport;
+            if (!vp) return;
+            // If the visual viewport is significantly smaller than the window,
+            // the virtual keyboard is likely open.
+            const isKeyboardOpen = vp.height < window.innerHeight - 100;
+
+            // If open, override the bottom safe area padding because the keyboard itself pushes the view up
+            setKeyboardPadding(isKeyboardOpen ? '16px' : 'calc(env(safe-area-inset-bottom) + 16px)');
+
+            // To prevent aggressive jumping on iOS Safari, we can also force the scroll position
+            if (isKeyboardOpen && document.activeElement === textareaRef.current) {
+                setTimeout(() => {
+                    window.scrollTo({ top: 0, behavior: 'instant' });
+                }, 10);
+            }
+        };
+
+        window.visualViewport.addEventListener('resize', handleResize);
+        handleResize();
+
+        return () => window.visualViewport?.removeEventListener('resize', handleResize);
+    }, []);
+
     // Click outside collapses input and closes special menu
     useEffect(() => {
         const handleClickOutside = (e: MouseEvent) => {
@@ -323,7 +353,8 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
 
     return (
         <div
-            className="bg-[#f0efed] pb-[max(16px,env(safe-area-inset-bottom))] pt-2"
+            className="bg-[#f0efed] pt-2"
+            style={{ paddingBottom: keyboardPadding, transition: 'padding-bottom 0.2s cubic-bezier(0.33, 1, 0.68, 1)' }}
             ref={containerRef}
         >
             <input
@@ -336,7 +367,7 @@ export default function TrackerInput({ onEntriesAdded, selectedDate }: TrackerIn
                 onChange={handleFileChange}
             />
 
-            <div className="tracker-input-bar px-4">
+            <div className="px-4">
                 {/* History panel */}
                 {showHistory && (
                     <div className="flex flex-col gap-4 border border-[#e2e8f0] rounded-2xl p-4 mb-3 max-h-64 overflow-y-auto">

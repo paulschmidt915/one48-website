@@ -15,6 +15,7 @@ const GOAL_BODYFAT = 14;
 
 interface ChartPoint {
     date: string;
+    timestamp: number;
     weight?: number;
     bodyFat?: number;
 }
@@ -26,9 +27,11 @@ function formatDate(dateStr: string) {
 
 const CustomTooltip = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
+    const d = new Date(label);
+    const dateLabel = `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
     return (
         <div className="bg-white border border-[#cbd5e1] px-3 py-2">
-            <p className="[font-family:var(--font-ibm-plex-mono)] text-[10px] uppercase tracking-[0.5px] text-[#94a3b8] mb-1">{label}</p>
+            <p className="[font-family:var(--font-ibm-plex-mono)] text-[10px] uppercase tracking-[0.5px] text-[#94a3b8] mb-1">{dateLabel}</p>
             {payload.map((p: any) => (
                 <p key={p.dataKey} className="[font-family:var(--font-ibm-plex-mono)] text-[11px] text-[#111]">
                     {p.name}: <span className="font-medium">{p.value}{p.dataKey === 'weight' ? ' kg' : ' %'}</span>
@@ -54,8 +57,8 @@ export default function BodyPage() {
             setEntries(all);
             if (all.length > 0) {
                 const last = all[all.length - 1];
-                if (last.weight != null) setWeight(String(last.weight));
-                if (last.bodyFat != null) setBodyFat(String(last.bodyFat));
+                if (last.weight != null) setWeight(last.weight.toFixed(1));
+                if (last.bodyFat != null) setBodyFat(last.bodyFat.toFixed(1));
             }
         } finally {
             setIsLoading(false);
@@ -88,7 +91,8 @@ export default function BodyPage() {
     const chartData: ChartPoint[] = React.useMemo(() => {
         const byDate: Record<string, ChartPoint> = {};
         for (const e of entries) {
-            const existing = byDate[e.dateStr] || { date: formatDate(e.dateStr) };
+            const ts = new Date(e.dateStr + 'T00:00:00').getTime();
+            const existing = byDate[e.dateStr] || { date: formatDate(e.dateStr), timestamp: ts };
             if (e.weight != null) existing.weight = e.weight;
             if (e.bodyFat != null) existing.bodyFat = e.bodyFat;
             byDate[e.dateStr] = existing;
@@ -136,11 +140,17 @@ export default function BodyPage() {
                             <ResponsiveContainer width="100%" height={220}>
                                 <LineChart data={chartData} margin={{ top: 8, right: 16, left: -20, bottom: 0 }}>
                                     <XAxis
-                                        dataKey="date"
+                                        dataKey="timestamp"
+                                        type="number"
+                                        scale="time"
+                                        domain={['dataMin', 'dataMax']}
                                         tick={{ fontFamily: 'var(--font-ibm-plex-mono)', fontSize: 10, fill: '#94a3b8' }}
                                         axisLine={{ stroke: '#cbd5e1' }}
                                         tickLine={false}
-                                        interval="preserveStartEnd"
+                                        tickFormatter={(ts: number) => {
+                                            const d = new Date(ts);
+                                            return `${String(d.getDate()).padStart(2, '0')}.${String(d.getMonth() + 1).padStart(2, '0')}`;
+                                        }}
                                     />
                                     <YAxis
                                         yAxisId="weight"
@@ -222,8 +232,10 @@ export default function BodyPage() {
                                 <input
                                     type="number"
                                     inputMode="decimal"
+                                    step="0.1"
                                     value={weight}
                                     onChange={e => setWeight(e.target.value)}
+                                    onBlur={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setWeight(v.toFixed(1)); }}
                                     placeholder="—"
                                     className="[font-family:var(--font-ibm-plex-mono)] text-[14px] font-medium text-[#111] bg-transparent border-b border-[#cbd5e1] focus:border-[#111] outline-none w-20 pb-0.5 transition-colors text-right"
                                 />
@@ -243,8 +255,10 @@ export default function BodyPage() {
                                 <input
                                     type="number"
                                     inputMode="decimal"
+                                    step="0.1"
                                     value={bodyFat}
                                     onChange={e => setBodyFat(e.target.value)}
+                                    onBlur={e => { const v = parseFloat(e.target.value); if (!isNaN(v)) setBodyFat(v.toFixed(1)); }}
                                     placeholder="—"
                                     className="[font-family:var(--font-ibm-plex-mono)] text-[14px] font-medium text-[#111] bg-transparent border-b border-[#cbd5e1] focus:border-[#111] outline-none w-20 pb-0.5 transition-colors text-right"
                                 />
