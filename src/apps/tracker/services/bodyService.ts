@@ -1,5 +1,6 @@
 import { nutritionDb as db } from "@/lib/firebase";
 import { ref, push, get, set, serverTimestamp } from "firebase/database";
+import { getUid } from "@/lib/authHelper";
 
 export interface BodyEntry {
     id?: string;
@@ -9,17 +10,16 @@ export interface BodyEntry {
     dateStr: string;       // YYYY-MM-DD
 }
 
-const DEFAULT_USER = "default_user";
-const BASE_PATH = `body_entries/${DEFAULT_USER}`;
-
 export async function saveBodyEntry(entry: Omit<BodyEntry, 'id' | 'timestamp'>): Promise<void> {
-    const entriesRef = ref(db, BASE_PATH);
+    const uid = await getUid();
+    const entriesRef = ref(db, `body_entries/${uid}`);
     const newRef = push(entriesRef);
     await set(newRef, { ...entry, timestamp: serverTimestamp() });
 }
 
 export async function getAllBodyEntries(): Promise<BodyEntry[]> {
-    const entriesRef = ref(db, BASE_PATH);
+    const uid = await getUid();
+    const entriesRef = ref(db, `body_entries/${uid}`);
     const snapshot = await get(entriesRef);
 
     if (!snapshot.exists()) return [];

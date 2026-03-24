@@ -1,5 +1,6 @@
 import { nutritionDb as db } from "@/lib/firebase";
 import { ref, push, get, set, remove, serverTimestamp } from "firebase/database";
+import { getUid } from "@/lib/authHelper";
 
 export interface NutritionEntry {
     id?: string;
@@ -20,10 +21,9 @@ export function getLocalDateString() {
     return `${year}-${month}-${day}`;
 }
 
-const DEFAULT_USER = "default_user";
-
 export async function addNutritionEntries(entries: NutritionEntry[], dateStr: string = getLocalDateString()) {
-    const entriesRef = ref(db, `nutrition_entries/${DEFAULT_USER}/${dateStr}`);
+    const uid = await getUid();
+    const entriesRef = ref(db, `nutrition_entries/${uid}/${dateStr}`);
 
     const addedEntries: NutritionEntry[] = [];
     for (const entry of entries) {
@@ -39,7 +39,8 @@ export async function addNutritionEntries(entries: NutritionEntry[], dateStr: st
 }
 
 export async function getNutritionEntries(dateStr: string = getLocalDateString()): Promise<NutritionEntry[]> {
-    const entriesRef = ref(db, `nutrition_entries/${DEFAULT_USER}/${dateStr}`);
+    const uid = await getUid();
+    const entriesRef = ref(db, `nutrition_entries/${uid}/${dateStr}`);
     const snapshot = await get(entriesRef);
 
     if (snapshot.exists()) {
@@ -58,7 +59,8 @@ export async function getNutritionEntries(dateStr: string = getLocalDateString()
 }
 
 export async function deleteNutritionEntry(entryId: string, dateStr: string = getLocalDateString()) {
-    const entryRef = ref(db, `nutrition_entries/${DEFAULT_USER}/${dateStr}/${entryId}`);
+    const uid = await getUid();
+    const entryRef = ref(db, `nutrition_entries/${uid}/${dateStr}/${entryId}`);
     await remove(entryRef);
 }
 
@@ -101,19 +103,22 @@ export interface SavedRecipe {
 }
 
 export async function saveRecipe(recipe: Omit<SavedRecipe, 'id' | 'timestamp'>): Promise<string> {
-    const recipesRef = ref(db, `saved_recipes/${DEFAULT_USER}`);
+    const uid = await getUid();
+    const recipesRef = ref(db, `saved_recipes/${uid}`);
     const newRef = push(recipesRef);
     await set(newRef, { ...recipe, timestamp: serverTimestamp() });
     return newRef.key!;
 }
 
 export async function deleteRecipe(recipeId: string): Promise<void> {
-    const recipeRef = ref(db, `saved_recipes/${DEFAULT_USER}/${recipeId}`);
+    const uid = await getUid();
+    const recipeRef = ref(db, `saved_recipes/${uid}/${recipeId}`);
     await remove(recipeRef);
 }
 
 export async function getSavedRecipes(): Promise<SavedRecipe[]> {
-    const recipesRef = ref(db, `saved_recipes/${DEFAULT_USER}`);
+    const uid = await getUid();
+    const recipesRef = ref(db, `saved_recipes/${uid}`);
     const snapshot = await get(recipesRef);
 
     if (snapshot.exists()) {
