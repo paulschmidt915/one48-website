@@ -1,23 +1,26 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter, Space_Grotesk } from 'next/font/google'
+import { Manrope, Playfair_Display } from 'next/font/google'
 import './globals.css'
 import SiteShell from '@/apps/agency/components/SiteShell'
+import GradientBackground from '@/apps/agency/components/GradientBackground'
+import SmoothScroll from '@/apps/agency/components/SmoothScroll'
 import { Analytics } from "@vercel/analytics/next"
 
 export const viewport: Viewport = {
   viewportFit: 'cover',
 }
 
-const inter = Inter({
+const manrope = Manrope({
   subsets: ['latin'],
-  weight: ['300', '400', '500', '600'],
-  variable: '--font-inter',
+  weight: ['300', '400', '500', '600', '700', '800'],
+  variable: '--font-manrope',
 })
 
-const spaceGrotesk = Space_Grotesk({
+const playfairDisplay = Playfair_Display({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
-  variable: '--font-space-grotesk',
+  style: ['normal', 'italic'],
+  variable: '--font-playfair',
 })
 
 export const metadata: Metadata = {
@@ -57,14 +60,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="de" className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html lang="de" className={`dark ${manrope.variable} ${playfairDisplay.variable}`}>
       <body>
+        <SmoothScroll />
         <div className="relative min-h-screen overflow-x-hidden selection:bg-primary/20 selection:text-primary">
-          {/* Background Orbs */}
-          <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
-            <div className="absolute top-[-10%] right-[-5%] w-[500px] h-[500px] bg-secondary opacity-10 dark:opacity-20 rounded-full blur-orb-1"></div>
-            <div className="absolute bottom-[10%] left-[-10%] w-[600px] h-[600px] bg-primary opacity-10 dark:opacity-15 rounded-full blur-orb-2"></div>
-          </div>
+          {/* Animated Gradient Background — Canvas-based with scroll reactivity */}
+          <GradientBackground />
           <SiteShell>{children}</SiteShell>
         </div>
         <Analytics />

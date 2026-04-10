@@ -26,8 +26,8 @@ const ProofSnippets: React.FC = () => {
       title: "Wir verankern KI und Automatisierung im Arbeitsalltag.",
       desc: "Wir arbeiten direkt im Prozess, priorisieren reale Pain Points und sorgen dafür, dass Lösungen genutzt, verstanden und weitergeführt werden.",
       icon: <Handshake className="w-32 h-32" />,
-      colorClass: "text-[#374151]",
-      bannerClass: "bg-[#374151]/10 text-[#374151] border-[#374151]/30"
+      colorClass: "text-neutral-dark",
+      bannerClass: "bg-neutral-dark/10 text-neutral-dark border-neutral-dark/30"
 
     }
   ];

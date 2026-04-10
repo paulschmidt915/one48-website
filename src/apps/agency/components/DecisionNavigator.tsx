@@ -212,7 +212,7 @@ const DecisionNavigator: React.FC = () => {
 
       <button
         onClick={() => setStep(0)}
-        className="group relative px-12 py-6 bg-text-light dark:bg-white text-white dark:text-background-dark font-display font-bold text-2xl rounded-2xl hover:shadow-[0_20px_50px_rgba(234,88,12,0.3)] transition-all hover:-translate-y-1 overflow-hidden"
+        className="group relative px-12 py-6 bg-text-light dark:bg-white text-white dark:text-background-dark font-display font-bold text-2xl rounded-2xl hover:shadow-[0_20px_50px_rgba(255,168,0,0.3)] transition-all hover:-translate-y-1 overflow-hidden"
       >
         <div className="absolute inset-0 bg-gradient-to-r from-secondary to-primary opacity-0 group-hover:opacity-100 transition-opacity"></div>
         <span className="relative z-10 flex items-center gap-4">

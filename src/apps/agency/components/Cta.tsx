@@ -8,7 +8,7 @@ interface CtaProps {
 
 const Cta: React.FC<CtaProps> = ({ onNavigateContact }) => {
   return (
-    <section className="py-24 px-4 relative overflow-hidden" id="kontakt">
+    <section className="py-32 px-4 relative overflow-hidden flex items-center justify-center" id="kontakt">
       {/* Background Decor */}
       <div className="absolute top-0 right-0 w-1/2 h-full bg-gradient-to-l from-background-light to-transparent dark:from-background-dark opacity-50 z-0"></div>
       <div className="absolute bottom-0 left-0 w-64 h-64 bg-primary opacity-5 dark:opacity-10 rounded-full blur-3xl z-0"></div>

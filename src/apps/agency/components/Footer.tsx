@@ -1,10 +1,10 @@
 'use client'
 
 import React from 'react';
-import { Linkedin, Lock } from 'lucide-react';
+import { Linkedin } from 'lucide-react';
 
 interface FooterProps {
-  onNavigate: (view: 'landing' | 'contact' | 'legal' | 'private' | 'planner') => void;
+  onNavigate: (view: 'landing' | 'contact' | 'legal') => void;
 }
 
 const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
@@ -31,9 +31,9 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
           <div className="max-w-xl">
             {/* Logo matching Navbar */}
             <div className="flex items-center gap-2 mb-6 cursor-pointer" onClick={() => onNavigate('landing')}>
-              <span className="font-display font-bold text-3xl md:text-4xl tracking-tight">
-                <span className="text-text-light dark:text-text-dark">one</span>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-secondary to-primary">48</span>
+              <span className="font-bold text-3xl md:text-4xl tracking-tight">
+                <span className="font-accent italic text-primary">one</span>
+                <span className="font-display text-text-light dark:text-text-dark">48</span>
               </span>
             </div>
 
@@ -73,13 +73,6 @@ const Footer: React.FC<FooterProps> = ({ onNavigate }) => {
             >
               <Linkedin className="w-5 h-5" />
             </a>
-            <button
-              onClick={() => onNavigate('private')}
-              className="text-text-light/40 dark:text-text-dark/40 hover:text-primary transition-colors bg-transparent border-0 cursor-pointer"
-              aria-label="Private Area"
-            >
-              <Lock className="w-5 h-5" />
-            </button>
           </div>
 
         </div>
