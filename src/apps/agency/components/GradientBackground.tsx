@@ -130,13 +130,15 @@ function generateNoiseCanvas(w: number, h: number): HTMLCanvasElement {
 // Overscan: Canvas ragt auf jeder Seite um diesen Anteil über den Viewport
 // hinaus. Dadurch liegt die harte Canvas-Kante (und alles was der
 // feDisplacementMap-Filter von "außerhalb" reinzieht) außerhalb des
-// sichtbaren Bereichs → keine harten Ränder mehr. Muss groß genug sein,
-// um den Displacement-Scale (440px) aufzufangen.
-const OVERSCAN = 0.22
+// sichtbaren Bereichs → keine harten Ränder mehr. 30% deckt den maximalen
+// Warp (≈ warpScale/2 = bis zu 22% des minVp) plus Sicherheitsmarge ab.
+const OVERSCAN = 0.30
 
 const GradientBackground: React.FC = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const noiseCanvasRef = useRef<HTMLCanvasElement | null>(null)
+  const displaceMapRef = useRef<SVGFEDisplacementMapElement>(null)
+  const turbulenceRef = useRef<SVGFETurbulenceElement>(null)
   const scrollProgress = useRef(0)
   const animRef = useRef<number>(0)
   const startTimeRef = useRef(0)
@@ -258,6 +260,27 @@ const GradientBackground: React.FC = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5)
       const vpW = window.innerWidth
       const vpH = window.innerHeight
+      const minVp = Math.min(vpW, vpH)
+
+      // ── Warp-Skala an Viewport koppeln ──
+      // Statisch 440px sah auf Mobile (≤ 400px viewport) viel zu heftig aus
+      // (über 100% Verzerrung relativ zur Bildbreite → zerrissene Ränder).
+      // Jetzt: skaliert linear mit minVp, gecappt bei 440 für Desktop.
+      // Max-Displacement = warpScale/2 ≈ 22% des minVp → passt unter den
+      // 30% OVERSCAN.
+      const warpScale = Math.min(440, minVp * 0.45)
+      displaceMapRef.current?.setAttribute('scale', String(warpScale))
+
+      // ── Turbulenz-Frequenz mitskalieren ──
+      // Auf Mobile sind die Original-Wellenlängen (~333 user units) fast so
+      // groß wie der ganze Viewport → man sieht nur eine einzige Verzerrungs-
+      // Blase statt mehrerer Mesh-Wellen. Frequenz hochziehen, je kleiner
+      // der Viewport.
+      const freqMult = Math.max(1, 900 / minVp)
+      const freqX = (0.0028 * freqMult).toFixed(5)
+      const freqY = (0.0034 * freqMult).toFixed(5)
+      turbulenceRef.current?.setAttribute('baseFrequency', `${freqX} ${freqY}`)
+
       // Canvas ist (1 + 2*OVERSCAN)× so breit/hoch wie der Viewport,
       // und wird per negativem left/top nach außen versetzt. Das Eltern-
       // Element ist fixed inset-0 mit overflow-hidden → alles, was über
@@ -317,6 +340,7 @@ const GradientBackground: React.FC = () => {
             colorInterpolationFilters="sRGB"
           >
             <feTurbulence
+              ref={turbulenceRef}
               type="fractalNoise"
               baseFrequency="0.0028 0.0034"
               numOctaves="3"
@@ -324,6 +348,7 @@ const GradientBackground: React.FC = () => {
               result="warp"
             />
             <feDisplacementMap
+              ref={displaceMapRef}
               in="SourceGraphic"
               in2="warp"
               scale="440"
