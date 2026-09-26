@@ -23,13 +23,15 @@ export default function SiteShell({ children }: { children: React.ReactNode }) {
   const navigateTo = (view: View) => router.push(VIEW_ROUTES[view])
 
   const isTrackerLegal = pathname === '/tracker-legal'
+  // App pages (legal texts the apps link to) stand alone, without the agency's navigation.
+  const isAppPage = isTrackerLegal || pathname.startsWith('/bucketlist/')
   const isLanding = pathname === '/'
 
   return (
     <div className={isTrackerLegal ? 'min-h-screen bg-[#f0efed] relative z-10' : 'relative z-10'}>
-      {!isTrackerLegal && <Navbar onNavigate={navigateTo} currentView={currentView} />}
+      {!isAppPage && <Navbar onNavigate={navigateTo} currentView={currentView} />}
       <main>{children}</main>
-      {!isTrackerLegal && !isLanding && <Footer onNavigate={navigateTo} />}
+      {!isAppPage && !isLanding && <Footer onNavigate={navigateTo} />}
     </div>
   )
 }
