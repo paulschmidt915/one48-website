@@ -56,7 +56,7 @@ export default function BucketlistPrivacyPage() {
       <div className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
         <p className="text-sm font-semibold uppercase tracking-wider text-[#1A7F72]">Bucketlist</p>
         <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Datenschutzerklärung</h1>
-        <p className="mt-3 text-[#6B6B6B]">Stand: 26. September 2026</p>
+        <p className="mt-3 text-[#6B6B6B]">Stand: 30. September 2026</p>
 
         <article className="mt-8 space-y-10 rounded-3xl bg-white p-6 leading-relaxed shadow-sm ring-1 ring-black/5 sm:p-10">
           <Section title="Verantwortlich">
