@@ -13,9 +13,9 @@ export const metadata: Metadata = {
 
 const link = 'underline decoration-[#35C8B4] decoration-2 underline-offset-2 hover:text-[#1A7F72] break-words'
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+function Section({ title, id, children }: { title: string; id?: string; children: React.ReactNode }) {
   return (
-    <section className="space-y-3">
+    <section id={id} className="space-y-3 scroll-mt-8">
       <h2 className="text-xl font-bold">{title}</h2>
       {children}
     </section>
@@ -152,6 +152,46 @@ export default function BucketlistPrivacyPage() {
               Moderation (Versand über Resend, Resend Inc., USA, auf Grundlage der EU-Standardvertragsklauseln).
               Rechtsgrundlage: Art. 6 Abs. 1 lit. f DSGVO (Schutz der Nutzer vor rechtswidrigen und anstößigen
               Inhalten). Meldungen löschen wir 12 Monate nach ihrer Bearbeitung.
+            </p>
+          </Section>
+
+          <Section title="KI-Assistenten (Claude, ChatGPT)" id="ki-assistenten">
+            <p>
+              Mit Konto kannst du Bucketlist mit einem KI-Assistenten verbinden, etwa Claude (Anthropic) oder ChatGPT
+              (OpenAI). Das ist freiwillig und passiert nur, wenn du es im Assistenten startest, dich auf{' '}
+              <a href="/bucketlist/verbinden" className={link}>
+                one48.de/bucketlist/verbinden
+              </a>{' '}
+              mit Apple anmeldest und „Erlauben“ tippst. Jede Verbindung gehört zu genau einem Konto.
+            </p>
+            <p>
+              <strong>Was der Assistent dann kann:</strong> deine Orte, Listen, Notizen, Tags, Besuche und Bewertungen
+              lesen, Orte speichern und ändern, eigene private Listen anlegen und Einträge hinzufügen oder entfernen,
+              Orte bei Google Maps suchen. Orte oder Listen löschen, Listen veröffentlichen und Profil, Blockierungen,
+              Meldungen oder Konto ändern kann er nicht; das sperrt auch der Server.
+            </p>
+            <p>
+              <strong>Wohin die Daten gehen:</strong> Was der Assistent für deine Anfrage abruft, schicken wir an den
+              Anbieter, den du verbunden hast. Er verarbeitet es als eigener Verantwortlicher nach seinen
+              Datenschutzbestimmungen und kann es in die USA übermitteln (Anthropic PBC und OpenAI, L.L.C. sind unter dem
+              EU-US Data Privacy Framework zertifiziert). Suchbegriffe, die der Assistent zur Ortssuche schickt, gehen
+              über unseren Server an Google (ohne Bezug zu dir). Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (du
+              nutzt die Verbindung).
+            </p>
+            <p>
+              <strong>Was wir dafür speichern:</strong> Supabase Auth speichert, welcher Assistent (Name, Kennung,
+              Rücksprungadresse) wann Zugriff bekommen hat, und die Sitzung der Verbindung. Pro Tag zählen wir, wie oft
+              der Assistent bei Google gesucht und Orte gespeichert hat (Missbrauchsschutz, gelöscht nach 7 Tagen).
+              Inhalte deiner Gespräche mit dem Assistenten erhalten und speichern wir nicht. Auf der Verbinden-Seite
+              hält dein Browser die Anmeldung im lokalen Speicher, bis du dich abmeldest.
+            </p>
+            <p>
+              <strong>Trennen:</strong> jederzeit auf{' '}
+              <a href="/bucketlist/verbinden" className={link}>
+                one48.de/bucketlist/verbinden
+              </a>{' '}
+              („Trennen“, wirkt spätestens nach einer Minute) oder durch Löschen des Kontos. Was der Anbieter schon
+              erhalten hat, löschst du dort.
             </p>
           </Section>
 
