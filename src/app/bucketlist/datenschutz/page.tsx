@@ -56,7 +56,7 @@ export default function BucketlistPrivacyPage() {
       <div className="mx-auto max-w-2xl px-4 py-12 sm:py-16">
         <p className="text-sm font-semibold uppercase tracking-wider text-[#1A7F72]">Bucketlist</p>
         <h1 className="mt-2 text-3xl font-bold sm:text-4xl">Datenschutzerklärung</h1>
-        <p className="mt-3 text-[#6B6B6B]">Stand: 30. September 2026</p>
+        <p className="mt-3 text-[#6B6B6B]">Stand: 9. Oktober 2026</p>
 
         <article className="mt-8 space-y-10 rounded-3xl bg-white p-6 leading-relaxed shadow-sm ring-1 ring-black/5 sm:p-10">
           <Section title="Verantwortlich">
@@ -192,6 +192,27 @@ export default function BucketlistPrivacyPage() {
               </a>{' '}
               („Trennen“, wirkt spätestens nach einer Minute) oder durch Löschen des Kontos. Was der Anbieter schon
               erhalten hat, löschst du dort.
+            </p>
+          </Section>
+
+          <Section title="Screenshots teilen" id="screenshots">
+            <p>
+              Mit Konto kannst du einen Screenshot über „Teilen → Bucketlist“ schicken. Das passiert nur, wenn du ihn
+              selbst teilst. Wir verkleinern das Bild auf deinem iPhone und schicken es über unseren Server an
+              Anthropic (Claude API). Claude erkennt die Orte darauf und sucht sie bei Google Maps (nur Suchbegriffe,
+              ohne Bezug zu dir). Eindeutige Orte speichern wir in deinem Konto, bei unklaren fragt dich die App nach.
+            </p>
+            <p>
+              <strong>Was wir speichern:</strong> das Bild nicht. Wir behalten nur Claudes kurze Beschreibung des
+              Screenshots, die gefundenen Orte und deine Antwort auf eine Rückfrage, höchstens 30 Tage. Pro Tag zählen
+              wir, wie viele Screenshots du geteilt hast (Missbrauchsschutz).
+            </p>
+            <p>
+              <strong>Wohin die Daten gehen:</strong> Anthropic PBC verarbeitet das Bild in unserem Auftrag, um die
+              Orte zu erkennen, und kann es in die USA übermitteln (zertifiziert unter dem EU-US Data Privacy
+              Framework). Über die API gesendete Inhalte nutzt Anthropic nicht zum Training. Rechtsgrundlage: Art. 6
+              Abs. 1 lit. b DSGVO (du nutzt die Funktion). Achte darauf, was auf dem Screenshot zu sehen ist, etwa
+              Namen oder Nachrichten anderer.
             </p>
           </Section>
 
