@@ -31,7 +31,7 @@ function Mail() {
 }
 
 const serverData: [string, string][] = [
-  ['Kennung, E-Mail-Adresse und Name von Apple', 'Anmeldung, Zuordnung deiner Daten'],
+  ['Kennung, E-Mail-Adresse und Name von Apple, oder deine E-Mail-Adresse und ein Hash deines Passworts', 'Anmeldung, Zuordnung deiner Daten'],
   ['Profil: Name, Handle, Profilbild (falls gesetzt)', 'Anzeige bei veröffentlichten Listen'],
   [
     'Orte: Google-ID, Name, Lage, Stadt, Land, Kategorie, deine Notizen, Tags, Besuche, Bewertungen',
@@ -80,7 +80,7 @@ export default function BucketlistPrivacyPage() {
                 iPhone.
               </li>
               <li>
-                Mit einem Konto (Anmelden mit Apple) liegen deine Orte und Listen zusätzlich auf unserem Server in{' '}
+                Mit einem Konto (Anmelden mit Apple oder mit E-Mail und Passwort) liegen deine Orte und Listen zusätzlich auf unserem Server in{' '}
                 <strong>Frankfurt am Main</strong> (Supabase, Rechenzentrum von Amazon Web Services, Region
                 eu-central-1), damit sie auf allen deinen Geräten gleich sind.
               </li>
@@ -121,7 +121,14 @@ export default function BucketlistPrivacyPage() {
             <p>
               <strong>Anmelden mit Apple</strong> (Apple Distribution International Ltd., Hollyhill Industrial
               Estate, Cork, Irland): Apple gibt uns eine Kennung, auf Wunsch deinen Namen und deine E-Mail-Adresse
-              (auch eine anonyme Weiterleitungsadresse von Apple). Ein Passwort gibt es bei uns nicht.
+              (auch eine anonyme Weiterleitungsadresse von Apple). Ein Passwort gibt es dabei nicht.
+            </p>
+            <p>
+              <strong>Anmelden mit E-Mail und Passwort:</strong> Wir speichern deine E-Mail-Adresse und dein Passwort
+              nur als Hash (bcrypt); im Klartext kennt es niemand. Zum Bestätigen der Adresse und zum Zurücksetzen des
+              Passworts schicken wir dir Mails über <strong>Resend</strong> (Resend, Inc., San Francisco, USA,
+              Auftragsverarbeiter; Versand aus der EU, Übermittlung in die USA auf Grundlage der
+              EU-Standardvertragsklauseln). Resend erfährt dafür deine E-Mail-Adresse und den Inhalt der Mail.
             </p>
             <p>
               <strong>Was auf unserem Server liegt</strong> (Supabase Inc., Auftragsverarbeiter, Server in Frankfurt
@@ -166,7 +173,7 @@ export default function BucketlistPrivacyPage() {
               <a href="/bucketlist/verbinden" className={link}>
                 one48.de/bucketlist/verbinden
               </a>{' '}
-              mit Apple anmeldest und „Erlauben“ tippst. Jede Verbindung gehört zu genau einem Konto.
+              anmeldest (mit Apple oder E-Mail, wie in der App) und „Erlauben“ tippst. Jede Verbindung gehört zu genau einem Konto.
             </p>
             <p>
               <strong>Was der Assistent dann kann:</strong> deine Orte, Listen, Notizen, Tags, Besuche und Bewertungen
@@ -238,7 +245,7 @@ export default function BucketlistPrivacyPage() {
               <li>
                 Dein Konto und alle Daten dazu bleiben, bis du das Konto löschst: App → Einstellungen → Konto →
                 „Konto löschen“. Dann löschen wir sofort Konto, Profil, Profilbild, Orte, Listen (auch
-                veröffentlichte), Follows, Blockierungen und deine Meldungen und widerrufen die Anmeldung mit Apple.
+                veröffentlichte), Follows, Blockierungen und deine Meldungen und widerrufen die Anmeldung mit Apple, falls du sie genutzt hast.
                 Auf dem iPhone kannst du deine Daten dabei behalten oder mitlöschen.
               </li>
               <li>

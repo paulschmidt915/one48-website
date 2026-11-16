@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient, type OAuthAuthorizationDetails, type OAuthGrant, type Session } from '@supabase/supabase-js'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { type FormEvent, useCallback, useEffect, useMemo, useState } from 'react'
 import { APPLE_SERVICES_ID, assistantName, isTrustedRedirect, PAGE_URL, SUPABASE_PUBLISHABLE_KEY, SUPABASE_URL } from './config'
 
 declare global {
@@ -45,11 +45,29 @@ async function sha256Hex(text: string): Promise<string> {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, '0')).join('')
 }
 
+/** Supabase's reasons, in the page's language; others keep Supabase's text. */
+export function emailErrorMessage(code: string | undefined, fallback: string): string {
+  switch (code) {
+    case 'invalid_credentials':
+      return 'E-Mail oder Passwort stimmt nicht.'
+    case 'email_not_confirmed':
+      return 'Bitte bestätige zuerst deine E-Mail-Adresse über den Link in der Mail.'
+    case 'over_request_rate_limit':
+    case 'over_email_send_rate_limit':
+      return 'Zu viele Versuche. Bitte warte kurz und probier es dann noch einmal.'
+    default:
+      return fallback
+  }
+}
+
 export default function Connect() {
   const supabase = useMemo(() => createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY), [])
   const [state, setState] = useState<State>({ step: 'loading' })
   const [session, setSession] = useState<Session | null>(null)
   const [busy, setBusy] = useState(false)
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [signInError, setSignInError] = useState<string | null>(null)
   const authorizationId = typeof window === 'undefined' ? null : new URLSearchParams(window.location.search).get('authorization_id')
 
   const load = useCallback(async (current: Session | null) => {
@@ -106,6 +124,19 @@ export default function Connect() {
     }
   }
 
+  /** Accounts created in the app with e-mail and password; new accounts are made in the app. */
+  async function signInWithEmail(event: FormEvent) {
+    event.preventDefault()
+    setBusy(true)
+    setSignInError(null)
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password })
+    setBusy(false)
+    if (error) return setSignInError(emailErrorMessage(error.code, error.message))
+    setPassword('')
+    setSession(data.session)
+    await load(data.session)
+  }
+
   async function decide(approve: boolean) {
     if (!authorizationId) return
     setBusy(true)
@@ -150,8 +181,39 @@ export default function Connect() {
           <button className={primary} onClick={signIn} disabled={busy}>
             Mit Apple anmelden
           </button>
+          <div className="flex items-center gap-3 text-sm text-[#6B6B6B]">
+            <span className="h-px flex-1 bg-[#D9D4C7]" />
+            oder mit E-Mail
+            <span className="h-px flex-1 bg-[#D9D4C7]" />
+          </div>
+          <form className="space-y-3" onSubmit={signInWithEmail}>
+            <input
+              className="w-full rounded-xl border border-[#D9D4C7] bg-white px-4 py-3"
+              type="email"
+              autoComplete="username"
+              placeholder="E-Mail-Adresse"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+            <input
+              className="w-full rounded-xl border border-[#D9D4C7] bg-white px-4 py-3"
+              type="password"
+              autoComplete="current-password"
+              placeholder="Passwort"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+            />
+            {signInError && <p className="rounded-xl bg-[#FDECEA] p-3 text-sm">{signInError}</p>}
+            <button className={secondary} type="submit" disabled={busy || !email || !password}>
+              Mit E-Mail anmelden
+            </button>
+          </form>
           <p className="text-sm text-[#6B6B6B]">
-            Nutze dieselbe Apple-ID wie in der App. Noch kein Konto? Lege es zuerst in der App an (Einstellungen → Konto).
+            Melde dich so an wie in der App: mit derselben Apple-ID oder derselben E-Mail-Adresse. Noch kein Konto? Lege es
+            zuerst in der App an (Einstellungen → Konto). Passwort vergessen? Setze es in der App unter „Mit E-Mail anmelden“
+            zurück.
           </p>
         </div>
       )
