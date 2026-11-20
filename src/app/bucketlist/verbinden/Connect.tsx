@@ -94,22 +94,38 @@ export default function Connect() {
     })
   }, [supabase, load])
 
+  // Safari blocks Apple's popup unless signIn() runs right in the click, so the script
+  // and the nonce are ready before the button is pressed.
+  const [apple, setApple] = useState<{ nonce: string } | null>(null)
+  const showsSignIn = state.step === 'signIn'
+  useEffect(() => {
+    if (!showsSignIn || apple) return
+    const nonce = crypto.randomUUID()
+    Promise.all([loadAppleScript(), sha256Hex(nonce)])
+      .then(([, hashed]) => {
+        window.AppleID!.auth.init({
+          clientId: APPLE_SERVICES_ID,
+          scope: '',
+          redirectURI: PAGE_URL,
+          usePopup: true,
+          nonce: hashed,
+        })
+        setApple({ nonce })
+      })
+      .catch((error: Error) => setSignInError(error.message))
+  }, [showsSignIn, apple])
+
   async function signIn() {
+    if (!apple) return
+    const { nonce } = apple
+    // Called before any await, so the popup still counts as the click's.
+    const popup = window.AppleID!.auth.signIn()
     setBusy(true)
     try {
-      await loadAppleScript()
-      const nonce = crypto.randomUUID()
-      window.AppleID!.auth.init({
-        clientId: APPLE_SERVICES_ID,
-        scope: '',
-        redirectURI: PAGE_URL,
-        usePopup: true,
-        nonce: await sha256Hex(nonce),
-      })
-      const apple = await window.AppleID!.auth.signIn()
+      const appleResult = await popup
       const { data, error } = await supabase.auth.signInWithIdToken({
         provider: 'apple',
-        token: apple.authorization.id_token,
+        token: appleResult.authorization.id_token,
         nonce,
       })
       if (error) throw error
@@ -118,7 +134,10 @@ export default function Connect() {
     } catch (error) {
       // Closing Apple's popup is no error worth showing.
       const message = error instanceof Error ? error.message : String((error as { error?: string })?.error ?? '')
-      if (message && !message.includes('popup_closed')) setState({ step: 'error', message })
+      if (message.includes('popup_blocked')) setSignInError('Dein Browser hat das Apple-Fenster blockiert. Erlaube Pop-ups für one48.de oder melde dich mit E-Mail an.')
+      else if (message && !message.includes('popup_closed')) setState({ step: 'error', message })
+      // A nonce is good for one sign-in only.
+      setApple(null)
     } finally {
       setBusy(false)
     }
@@ -178,7 +197,7 @@ export default function Connect() {
               ? 'Ein KI-Assistent möchte auf deine Bucketlist zugreifen. Melde dich an, um zu sehen, wer fragt, und zu entscheiden.'
               : 'Melde dich an, um zu sehen, welche Assistenten mit deiner Bucketlist verbunden sind.'}
           </p>
-          <button className={primary} onClick={signIn} disabled={busy}>
+          <button className={primary} onClick={signIn} disabled={busy || !apple}>
             Mit Apple anmelden
           </button>
           <div className="flex items-center gap-3 text-sm text-[#6B6B6B]">
