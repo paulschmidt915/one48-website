@@ -5,7 +5,9 @@ export type Part = string | { label: string; href: string }
 const about: Part[] = [
   'I bring AI into everyday work at ',
   { label: 'Bertelsmann', href: 'https://www.linkedin.com/in/paul-schmidt-550917178/' },
-  ', build my own apps, research what it means for work and society at WU Vienna, and talk about it on my ',
+  ', build my own ',
+  { label: 'apps', href: '#projects' },
+  ', research what it means for work and society at WU Vienna, and talk about it on my ',
   { label: 'podcast', href: 'https://open.spotify.com/show/7qSUA2thxkiXCXmp8OUFc5' },
   ', on ',
   { label: 'Instagram', href: 'https://www.instagram.com/paulexplainsai/' },
