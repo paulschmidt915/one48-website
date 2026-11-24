@@ -699,9 +699,13 @@ html[data-viewer] { overflow: hidden; }
 
 /* The phone: a dark rim around the screen, the island on top. Sizes follow the height. */
 .phone {
-  --h: min(70svh, 46rem, calc((100vw - 2.5rem) * 2.174));
+  /* Height first; the width follows from it, set outright (Safari sizes an aspect-ratio box inside a
+     flex row from its images instead). Screen: (1 - 2 × 0.014) × h × 603 / 1311; rim: 2 × 0.014 × h. */
+  --h: min(70svh, 46rem, calc((100vw - 2.5rem) / 0.4751));
   display: flex;
+  flex: none;
   height: var(--h);
+  width: calc(var(--h) * 0.4751);
   padding: calc(var(--h) * 0.014);
   border-radius: calc(var(--h) * 0.074);
   background: #0c0e12;
@@ -720,8 +724,9 @@ html[data-viewer] { overflow: hidden; }
 
 .phone-screen {
   position: relative;
+  width: 100%;
   height: 100%;
-  aspect-ratio: 603 / 1311;
+  min-width: 0;
   border-radius: calc(var(--h) * 0.06);
   overflow: hidden;
   background: #fff;
@@ -730,6 +735,7 @@ html[data-viewer] { overflow: hidden; }
 
 .phone-track {
   display: flex;
+  width: 100%;
   height: 100%;
   overflow-x: auto;
   overflow-y: hidden;
@@ -745,6 +751,7 @@ html[data-viewer] { overflow: hidden; }
 
 .phone-slide {
   flex: 0 0 100%;
+  min-width: 0;
   height: 100%;
   margin: 0;
   scroll-snap-align: center;
