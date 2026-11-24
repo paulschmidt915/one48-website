@@ -20,9 +20,9 @@ export default function TrackerLegalPage() {
             <h2>1. Verantwortlicher</h2>
             <p>Verantwortlich für die Datenverarbeitung im Rahmen der Foodtracker App ist:</p>
             <p>Paul Schmidt</p>
-            <p>Überwasserstraße 38</p>
-            <p>48143 Münster</p>
-            <p>Deutschland</p>
+            <p>Gärtnergasse 9</p>
+            <p>1030 Wien</p>
+            <p>Österreich</p>
             <p>E-Mail: <a href="mailto:paulschmidt@one48.de">paulschmidt@one48.de</a></p>
           </div>
 
@@ -128,9 +128,9 @@ export default function TrackerLegalPage() {
           <div>
             <h2>Angaben gemäß § 5 TMG</h2>
             <p>Paul Schmidt</p>
-            <p>Überwasserstraße 38</p>
-            <p>48143 Münster</p>
-            <p>Deutschland</p>
+            <p>Gärtnergasse 9</p>
+            <p>1030 Wien</p>
+            <p>Österreich</p>
           </div>
 
           <div>
@@ -147,9 +147,9 @@ export default function TrackerLegalPage() {
           <div>
             <h2>Redaktionell verantwortlich</h2>
             <p>Paul Schmidt</p>
-            <p>Überwasserstraße 38</p>
-            <p>48143 Münster</p>
-            <p>Deutschland</p>
+            <p>Gärtnergasse 9</p>
+            <p>1030 Wien</p>
+            <p>Österreich</p>
           </div>
 
           <div>
