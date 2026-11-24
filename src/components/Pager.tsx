@@ -65,7 +65,14 @@ export default function Pager() {
       if (page) scrollToY(page.offsetTop)
     }
 
+    // The phone viewer is open: it has the wheel and the keys, the page stays put.
+    const viewerOpen = () => html.hasAttribute('data-viewer')
+
     const onWheel = (e: WheelEvent) => {
+      if (viewerOpen()) {
+        if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) e.preventDefault()
+        return
+      }
       if (e.ctrlKey || Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return
       const dir = Math.sign(e.deltaY)
       const i = current()
@@ -98,7 +105,7 @@ export default function Pager() {
     }
 
     const onKey = (e: KeyboardEvent) => {
-      if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return
+      if (viewerOpen() || e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return
       const target = e.target as HTMLElement
       if (target.closest('input, textarea, select, [contenteditable]')) return
       if (e.key === ' ' && target.closest('button, a')) return
