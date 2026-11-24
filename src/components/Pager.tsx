@@ -144,7 +144,18 @@ export default function Pager() {
     )
     pages().slice(1).forEach((p) => seen.observe(p))
 
-    // Opened at #projects, or the layout moved under us: settle on a whole page again.
+    // A page that is mostly out of view fades out, so the end of one page never shows above the
+    // next (Safari snaps a page below the status bar, and the strip above it shows the page before).
+    const away = new IntersectionObserver(
+      (entries) => entries.forEach((entry) => entry.target.toggleAttribute('data-away', entry.intersectionRatio < 0.3)),
+      { threshold: [0, 0.3, 0.6, 1] }
+    )
+    pages().forEach((p) => away.observe(p))
+
+    // Opened at #projects, or the window got a new width: settle on a whole page again. Never while
+    // the person is scrolling: the phone's toolbar collapsing on the first swipe also resizes.
+    let touched = false
+    const markTouched = () => (touched = true)
     const align = (fromHash = false) => {
       if (frame) return
       const list = pages()
@@ -154,11 +165,20 @@ export default function Pager() {
         window.scrollTo(0, page.offsetTop)
       }
     }
-    const onLoad = () => align(true)
-    const onResize = () => align()
+    const onLoad = () => {
+      if (window.location.hash && !touched) align(true)
+    }
+    let width = window.innerWidth
+    const onResize = () => {
+      if (window.innerWidth === width) return
+      width = window.innerWidth
+      align()
+    }
     const settle = requestAnimationFrame(onLoad)
     window.addEventListener('load', onLoad)
     window.addEventListener('resize', onResize)
+    window.addEventListener('touchstart', markTouched, { passive: true })
+    window.addEventListener('wheel', markTouched, { passive: true })
 
     window.addEventListener('wheel', onWheel, { passive: false })
     window.addEventListener('keydown', onKey)
@@ -168,10 +188,13 @@ export default function Pager() {
       window.removeEventListener('keydown', onKey)
       document.removeEventListener('click', onClick)
       seen.disconnect()
+      away.disconnect()
       cancelAnimationFrame(frame)
       cancelAnimationFrame(settle)
       window.removeEventListener('load', onLoad)
       window.removeEventListener('resize', onResize)
+      window.removeEventListener('touchstart', markTouched)
+      window.removeEventListener('wheel', markTouched)
       html.style.scrollSnapType = ''
       html.removeAttribute('data-pager')
     }

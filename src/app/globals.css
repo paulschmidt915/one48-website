@@ -341,7 +341,10 @@ html[data-pager] {
 .page {
   scroll-snap-align: start;
   scroll-snap-stop: always;
+  transition: opacity 0.5s ease;
 }
+/* Mostly out of view (Pager): faded, so its edge does not peek in above or below the other page. */
+.page[data-away] { opacity: 0; }
 
 .home-nav {
   display: flex;
@@ -880,7 +883,8 @@ html[data-viewer] { overflow: hidden; }
   .tile-more,
   .tile-more-inner,
   .projects-title,
-  .projects .home-top {
+  .projects .home-top,
+  .page {
     transition: none;
   }
   .tile-status::before,
