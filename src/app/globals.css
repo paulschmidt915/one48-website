@@ -222,12 +222,14 @@ body {
 .headline .word {
   display: inline-block;
   white-space: nowrap;
-  /* Clip the rising letters; room on every side so nothing else is cut. */
-  overflow: clip;
+  /* Clip the rising letters; room on every side so nothing else is cut. A clip-path, not overflow:
+     Safari moves an inline-block's baseline when its overflow is clipped, so the lines would jump
+     closer together the moment the clip comes off. */
+  clip-path: inset(0);
   padding: 0.08em 0.08em 0.26em 0.05em;
   margin: -0.08em -0.08em -0.26em -0.05em;
 }
-.headline[data-ready] .word { overflow: visible; }
+.headline[data-ready] .word { clip-path: none; }
 
 .headline .gap { display: inline-block; width: 0.2em; }
 .headline .gap.not-narrow { display: none; }
