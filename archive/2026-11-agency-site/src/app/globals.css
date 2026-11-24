@@ -1,0 +1,287 @@
+@import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark *));
+
+:root {
+  --scroll-progress: 0;
+}
+
+@theme {
+  /* === NEW DESIGN SYSTEM — Inspired by dark, vibrant aesthetic === */
+
+  /* Signal colors */
+  --color-primary: #FFA800;       /* Amber/Orange — primary accent */
+  --color-secondary: #00FFE0;     /* Cyan/Turquoise — secondary accent */
+  --color-accent: #CC0088;        /* Magenta — gradient accent */
+
+  /* Backgrounds — fundamentally dark, navy-tinted */
+  --color-background-light: #0B0F1A;
+  --color-background-dark: #0B0F1A;
+
+  /* Surfaces — slightly elevated dark panels */
+  --color-surface-light: #131825;
+  --color-surface-dark: #131825;
+
+  /* Text — white primary, slate for secondary */
+  --color-text-light: #F3F4F6;
+  --color-text-dark: #F3F4F6;
+
+  /* Neutral/borders — subtle dark tones */
+  --color-neutral-light: #1E2638;
+  --color-neutral-dark: #1E2638;
+
+  /* Fonts: Manrope (body + display), Playfair Display (accent/serif italic) */
+  --font-body: var(--font-manrope), sans-serif;
+  --font-display: var(--font-manrope), sans-serif;
+  --font-accent: var(--font-playfair), serif;
+
+  /* Gradients */
+  --background-image-gradient-glow-light: linear-gradient(135deg, rgba(0, 255, 224, 0.08) 0%, rgba(255, 168, 0, 0.08) 100%);
+  --background-image-gradient-glow-dark: linear-gradient(135deg, rgba(0, 255, 224, 0.12) 0%, rgba(255, 168, 0, 0.12) 100%);
+}
+
+/* Lenis smooth scroll — disable native smoothing so Lenis drives it */
+html.lenis,
+html.lenis body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+}
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+
+body {
+  @apply bg-background-dark text-text-dark font-body transition-colors duration-300;
+  background-color: #0B0F1A;
+  color: #F3F4F6;
+}
+
+/* Custom classes from index.html <style> block */
+.blur-orb-1 {
+  filter: blur(120px);
+}
+
+.blur-orb-2 {
+  filter: blur(160px);
+}
+
+.glass {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+/* Custom Sleek Scrollbar */
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 0, 0, 0.1) transparent;
+}
+
+.dark .custom-scrollbar {
+  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(0, 0, 0, 0.1);
+  border-radius: 9999px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.custom-scrollbar-hidden {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.custom-scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+}
+
+/* iOS PWA Safe Area */
+.tracker-header {
+  padding-top: calc(env(safe-area-inset-top) + 12px);
+}
+
+.tracker-input-bar {
+  padding-top: 8px;
+}
+
+/* Tracker controls row enter animation */
+.tracker-controls-row {
+  animation: trackerControlsIn 150ms ease-out;
+}
+
+@keyframes trackerControlsIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Tracker: AudioBars mic button — scaleY only (GPU composited, no layout/paint) */
+@keyframes trk-rec-0 {
+
+  0%,
+  100% {
+    transform: scaleY(0.17);
+  }
+
+  50% {
+    transform: scaleY(0.72);
+  }
+}
+
+@keyframes trk-rec-1 {
+
+  0%,
+  100% {
+    transform: scaleY(0.56);
+  }
+
+  35% {
+    transform: scaleY(0.17);
+  }
+
+  70% {
+    transform: scaleY(0.83);
+  }
+}
+
+@keyframes trk-rec-2 {
+
+  0%,
+  100% {
+    transform: scaleY(0.28);
+  }
+
+  45% {
+    transform: scaleY(0.83);
+  }
+
+  85% {
+    transform: scaleY(0.17);
+  }
+}
+
+@keyframes trk-rec-3 {
+
+  0%,
+  100% {
+    transform: scaleY(0.44);
+  }
+
+  25% {
+    transform: scaleY(0.17);
+  }
+
+  60% {
+    transform: scaleY(0.67);
+  }
+}
+
+@keyframes trk-load {
+
+  0%,
+  60%,
+  100% {
+    transform: scaleY(0.17);
+  }
+
+  30% {
+    transform: scaleY(0.78);
+  }
+}
+
+.trk-bars-wrap {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 18px;
+}
+
+.trk-bar {
+  width: 3px;
+  height: 18px;
+  border-radius: 99px;
+  background-color: white;
+  transform-origin: center;
+  transition: transform 0.35s ease;
+}
+
+.trk-bar--idle-0 {
+  transform: scaleY(0.50);
+}
+
+.trk-bar--idle-1 {
+  transform: scaleY(0.95);
+}
+
+.trk-bar--idle-2 {
+  transform: scaleY(0.72);
+}
+
+.trk-bar--idle-3 {
+  transform: scaleY(0.39);
+}
+
+.trk-bar--rec-0 {
+  animation: trk-rec-0 0.75s ease-in-out infinite;
+}
+
+.trk-bar--rec-1 {
+  animation: trk-rec-1 1.05s ease-in-out infinite;
+}
+
+.trk-bar--rec-2 {
+  animation: trk-rec-2 0.90s ease-in-out infinite;
+}
+
+.trk-bar--rec-3 {
+  animation: trk-rec-3 0.65s ease-in-out infinite;
+}
+
+.trk-bar--load-0 {
+  animation: trk-load 0.9s ease-in-out 0.00s infinite;
+}
+
+.trk-bar--load-1 {
+  animation: trk-load 0.9s ease-in-out 0.15s infinite;
+}
+
+.trk-bar--load-2 {
+  animation: trk-load 0.9s ease-in-out 0.30s infinite;
+}
+
+.trk-bar--load-3 {
+  animation: trk-load 0.9s ease-in-out 0.45s infinite;
+}
