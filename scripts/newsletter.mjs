@@ -32,7 +32,7 @@ const post = getPost(slug, true)
 if (!post) stop(`There is no post content/blog/${slug}.md.`)
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const email = postEmail({ ...post, dateLabel: formatDate(post.date) })
+const email = postEmail({ ...post, html: post.emailHtml, dateLabel: formatDate(post.date, post.lang) })
 const name = `Blog: ${post.slug}`
 
 if (test) {

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import Backdrop from '@/components/Backdrop'
 import RollLink from '@/components/RollLink'
 import Subscribe from '@/components/Subscribe'
-import { formatDate, getPosts } from '@/lib/posts'
+import { formatDate, getPosts, words } from '@/lib/posts'
 import { site } from '@/site'
 
 const description = 'What I learn about AI at work and building my own apps. New posts also come by e-mail.'
@@ -32,8 +32,16 @@ export default function BlogPage() {
           <ol className="posts">
             {posts.map((p, i) => (
               <li key={p.slug} style={{ '--i': i } as React.CSSProperties}>
-                <Link href={`/blog/${p.slug}`} className="post-card">
-                  <time dateTime={p.date}>{formatDate(p.date)}</time>
+                <Link href={`/blog/${p.slug}`} className="post-card" lang={p.lang === 'en' ? undefined : p.lang}>
+                  <span className="post-card-meta">
+                    {p.series && (
+                      <span className="post-card-series">
+                        {p.series.name}
+                        {p.series.episode ? ` · ${words[p.lang].episode} ${p.series.episode}` : ''}
+                      </span>
+                    )}
+                    <time dateTime={p.date}>{formatDate(p.date, p.lang)}</time>
+                  </span>
                   <span className="post-card-title">
                     {p.title}
                     {p.draft && <span className="post-draft">Draft</span>}

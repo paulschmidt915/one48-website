@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "newsletter": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/newsletter.mjs"
+    "newsletter": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON scripts/newsletter.mjs",
+    "check-post": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=ExperimentalWarning scripts/check-post.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.117.2",

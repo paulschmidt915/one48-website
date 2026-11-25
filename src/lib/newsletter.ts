@@ -70,10 +70,10 @@ const escape = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
 /** The frame every e-mail sits in. */
-function layout({ preview, body, footer }: { preview: string; body: string; footer: string }): string {
+function layout({ preview, body, footer, lang = 'en' }: { preview: string; body: string; footer: string; lang?: 'de' | 'en' }): string {
   const site = newsletter.siteUrl
   return `<!doctype html>
-<html lang="en">
+<html lang="${lang}">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -93,7 +93,7 @@ function layout({ preview, body, footer }: { preview: string; body: string; foot
   .post strong { color: ${ink}; font-weight: 600; }
   .post a { color: ${ink}; text-decoration: underline; text-underline-offset: 3px; }
   .post img { max-width: 100%; height: auto; border-radius: 16px; }
-  .post blockquote { margin: 0 0 16px; padding: 2px 0 2px 16px; border-left: 2px solid ${ink}; color: ${muted}; }
+  .post blockquote { margin: 0 0 16px; padding: 2px 0 2px 16px; color: ${muted}; }
   .post code { font-family: Menlo, Consolas, monospace; font-size: 14px; background: rgba(16,19,26,0.06); padding: 1px 5px; border-radius: 5px; }
   .post pre { background: rgba(16,19,26,0.05); padding: 14px 16px; border-radius: 14px; overflow-x: auto; }
   .post pre code { background: none; padding: 0; }
@@ -166,22 +166,76 @@ export function confirmEmail(token: string): { subject: string; html: string; te
 /** Links and images in a post point to the site, so they work in the e-mail too. */
 const absolute = (html: string) => html.replace(/(href|src)="\/(?!\/)/g, `$1="${newsletter.siteUrl}/`)
 
+type EmailPost = {
+  slug: string
+  title: string
+  description: string
+  /** The post rendered for e-mail (Post.emailHtml): interactive figures are link cards there. */
+  html: string
+  dateLabel: string
+  lang?: 'de' | 'en'
+  readingMinutes?: number
+  /** A post of the podcast series: an episode line on top, a block pointing to the episode at the end. */
+  series?: { name: string; show: string; episode: number | null; podcast: string | null; duration: number | null } | null
+}
+
+const emailWords = {
+  en: {
+    read: 'Read on the website',
+    episode: 'Episode',
+    listen: 'Listen to the episode',
+    show: 'All episodes on Spotify',
+    outro: 'This was the short version. The episode goes deeper, with all sources in the show notes.',
+    min: (n: number) => `${n} min read`,
+    footer: (link: string) => `You get this because you subscribed on ${link}. Just reply to write to me.`,
+    unsubscribe: 'Unsubscribe',
+  },
+  de: {
+    read: 'Auf der Website lesen',
+    episode: 'Folge',
+    listen: 'Folge anhören',
+    show: 'Alle Folgen auf Spotify',
+    outro: 'Das hier war die Kurzfassung. In der Folge gehe ich tiefer rein, alle Quellen stehen in den Shownotes.',
+    min: (n: number) => `${n} Min. Lesezeit`,
+    footer: (link: string) => `Du bekommst diese E-Mail, weil du dich auf ${link} angemeldet hast. Antworte einfach, wenn du mir schreiben willst.`,
+    unsubscribe: 'Abmelden',
+  },
+}
+
 /** A blog post as a newsletter. Resend fills in the unsubscribe link for every subscriber. */
-export function postEmail(post: { slug: string; title: string; description: string; html: string; dateLabel: string }): {
+export function postEmail(post: EmailPost): {
   subject: string
   html: string
   previewText: string
 } {
   const url = `${newsletter.siteUrl}/blog/${post.slug}`
+  const lang = post.lang ?? 'en'
+  const w = emailWords[lang]
+  const s = post.series
+  const episodeLabel = s ? `${escape(s.name)}${s.episode ? ` · ${w.episode} ${s.episode}` : ''}` : ''
+  const meta = [escape(post.dateLabel), s && post.readingMinutes ? w.min(post.readingMinutes) : ''].filter(Boolean).join(' · ')
+  const top = s
+    ? `<p style="margin:0 0 12px;font-size:13px;color:${soft};"><a href="${s.podcast ?? s.show}" style="color:${ink};text-decoration:none;font-weight:600;">${episodeLabel}</a> · ${meta}</p>`
+    : `<p style="margin:0 0 12px;font-size:13px;color:${soft};">${meta}</p>`
+  const outro = s
+    ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:30px 0 0;"><tr><td style="padding:22px 22px 24px;border-radius:20px;background-color:#eef1f5;background-color:rgba(16,19,26,0.045);">
+        <p style="margin:0 0 4px;font-size:12px;letter-spacing:0.06em;text-transform:uppercase;color:${soft};">${episodeLabel}</p>
+        <p style="margin:0 0 16px;font-size:16px;line-height:1.5;color:${muted};">${w.outro}</p>
+        ${button(s.podcast ?? s.show, w.listen + (s.duration ? ` · ${s.duration} Min.` : ''))}
+        <p style="margin:14px 0 0;font-size:14px;"><a href="${s.show}" style="color:${muted};text-decoration:underline;">${w.show}</a></p>
+      </td></tr></table>`
+    : ''
   const html = layout({
+    lang,
     preview: post.description || post.title,
     body: `
-      <p style="margin:0 0 12px;font-size:13px;color:${soft};">${escape(post.dateLabel)}</p>
+      ${top}
       ${h1(`<a href="${url}" style="color:${ink};text-decoration:none;">${escape(post.title)}</a>`)}
       <div class="post" style="padding-top:6px;">${absolute(post.html)}</div>
-      <div style="padding-top:14px;">${button(url, 'Read on the website')}</div>`,
-    footer: `You get this because you subscribed on ${footerLink(`${newsletter.siteUrl}/blog`, 'one48.de')}. Just reply to write to me.<br>
-      ${footerLink('{{{RESEND_UNSUBSCRIBE_URL}}}', 'Unsubscribe')} · ${footerLink(`${newsletter.siteUrl}/legal`, 'Impressum &amp; Datenschutz')}`,
+      <div style="padding-top:14px;">${button(url, w.read)}</div>
+      ${outro}`,
+    footer: `${w.footer(footerLink(`${newsletter.siteUrl}/blog`, 'one48.de'))}<br>
+      ${footerLink('{{{RESEND_UNSUBSCRIBE_URL}}}', w.unsubscribe)} · ${footerLink(`${newsletter.siteUrl}/legal`, 'Impressum &amp; Datenschutz')}`,
   })
   return { subject: post.title, html, previewText: post.description }
 }
