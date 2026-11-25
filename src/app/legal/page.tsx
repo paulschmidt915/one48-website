@@ -63,7 +63,7 @@ export default function LegalPage() {
 
         <div>
           <p>Informationen zur Verarbeitung personenbezogener Daten nach Art. 13 DSGVO</p>
-          <p>Stand: 21.12.2025</p>
+          <p>Stand: 25.11.2026</p>
 
           <div>
             <h2>1. Verantwortlicher</h2>
@@ -175,15 +175,39 @@ export default function LegalPage() {
             <p className="italic">Hinweis zur Pflichtangabe: Ohne die als erforderlich gekennzeichneten Daten ist eine Terminbuchung in der Regel nicht möglich.</p>
           </div>
 
+          <section id="newsletter">
+            <h2>7. Newsletter (neue Blogbeiträge per E-Mail)</h2>
+            <p>Auf der Website können Sie sich für einen Newsletter anmelden, mit dem Sie neue Beiträge aus meinem Blog per E-Mail erhalten.</p>
+
+            <h3>7.1 Welche Daten werden verarbeitet?</h3>
+            <ul>
+              <li>E-Mail-Adresse</li>
+              <li>Zeitpunkt der Anmeldung und der Bestätigung</li>
+              <li>technische Versanddaten (z. B. Zustellstatus, Abmeldung)</li>
+            </ul>
+
+            <h3>7.2 Double-Opt-in</h3>
+            <p>Nach der Anmeldung erhalten Sie eine E-Mail mit einem Bestätigungslink. Erst wenn Sie die Anmeldung darüber bestätigen, wird Ihre Adresse in den Verteiler aufgenommen. Bestätigen Sie nicht, wird Ihre Adresse nicht gespeichert; der Link verfällt nach sieben Tagen.</p>
+
+            <h3>7.3 Zweck und Rechtsgrundlage</h3>
+            <p>Zweck ist der Versand neuer Blogbeiträge per E-Mail. Rechtsgrundlage ist Ihre Einwilligung (Art. 6 Abs. 1 lit. a DSGVO, § 174 TKG 2021). Sie können die Einwilligung jederzeit widerrufen, über den Abmeldelink in jeder E-Mail oder per Nachricht an <a href="mailto:paulschmidt@one48.de">paulschmidt@one48.de</a>.</p>
+
+            <h3>7.4 Versanddienstleister Resend</h3>
+            <p>Für Anmeldung und Versand nutzen wir Resend (Resend, Inc., San Francisco, USA) als Auftragsverarbeiter. Die E-Mails werden über die EU-Region (Irland) versendet; eine Verarbeitung in den USA kann dennoch nicht ausgeschlossen werden. Grundlage dafür sind die EU-Standardvertragsklauseln. Das Öffnen der E-Mails und das Klicken von Links werten wir nicht aus.</p>
+
+            <h3>7.5 Speicherdauer</h3>
+            <p>Ihre Adresse bleibt gespeichert, bis Sie sich abmelden. Nach der Abmeldung wird sie als abgemeldet markiert, damit Sie keine weiteren E-Mails erhalten, und auf Wunsch vollständig gelöscht.</p>
+          </section>
+
           <div>
-            <h2>7. Kontaktaufnahme (z. B. per E-Mail)</h2>
+            <h2>8. Kontaktaufnahme (z. B. per E-Mail)</h2>
             <p>Wenn Sie uns per E-Mail kontaktieren, verarbeiten wir Ihre Angaben (z. B. Name, E-Mail-Adresse, Inhalt der Nachricht), um Ihre Anfrage zu bearbeiten.</p>
             <p>Rechtsgrundlage: Art. 6 Abs. 1 lit. b DSGVO (Anfrage/Anbahnung) oder Art. 6 Abs. 1 lit. f DSGVO (berechtigtes Interesse an effizienter Kommunikation)</p>
             <p>Speicherdauer: solange erforderlich für Bearbeitung; darüber hinaus nur, wenn dies zur Dokumentation oder aufgrund gesetzlicher Pflichten erforderlich ist.</p>
           </div>
 
           <div>
-            <h2>8. Externe Links & Affiliate-Links</h2>
+            <h2>9. Externe Links & Affiliate-Links</h2>
             <p>Unsere Website enthält Links zu externen Webseiten Dritter. Für deren Inhalte und Datenverarbeitung sind ausschließlich die jeweiligen Betreiber verantwortlich.</p>
 
             <h3>Affiliate-Links</h3>
@@ -196,16 +220,17 @@ export default function LegalPage() {
           </div>
 
           <div>
-            <h2>9. Empfänger / Auftragsverarbeiter</h2>
+            <h2>10. Empfänger / Auftragsverarbeiter</h2>
             <p>Wir setzen Dienstleister ein, die Daten in unserem Auftrag verarbeiten (Art. 28 DSGVO), insbesondere:</p>
             <ul>
               <li>Vercel Inc. (Hosting, Web Analytics)</li>
               <li>Microsoft (Microsoft Bookings / Microsoft 365 Dienste im Rahmen der Terminorganisation)</li>
+              <li>Resend, Inc. (Newsletter-Versand)</li>
             </ul>
           </div>
 
           <div>
-            <h2>10. Datensicherheit</h2>
+            <h2>11. Datensicherheit</h2>
             <p>Wir nutzen geeignete technische und organisatorische Maßnahmen, insbesondere:</p>
             <ul>
               <li>TLS/SSL-Verschlüsselung (https)</li>
@@ -215,7 +240,7 @@ export default function LegalPage() {
           </div>
 
           <div>
-            <h2>11. Ihre Rechte (Betroffenenrechte)</h2>
+            <h2>12. Ihre Rechte (Betroffenenrechte)</h2>
             <p>Sie haben jederzeit folgende Rechte nach DSGVO:</p>
             <ul>
               <li>Auskunft (Art. 15)</li>
@@ -230,7 +255,7 @@ export default function LegalPage() {
           </div>
 
           <div>
-            <h2>12. Beschwerderecht bei der Aufsichtsbehörde</h2>
+            <h2>13. Beschwerderecht bei der Aufsichtsbehörde</h2>
             <p>Sie haben das Recht, sich bei einer Datenschutz-Aufsichtsbehörde zu beschweren (Art. 77 DSGVO). Zuständig für Nordrhein-Westfalen ist insbesondere:</p>
             <p>Landesbeauftragte für Datenschutz und Informationsfreiheit Nordrhein-Westfalen (LDI NRW)</p>
             <p>Postfach 20 04 44, 40102 Düsseldorf</p>
@@ -238,7 +263,7 @@ export default function LegalPage() {
           </div>
 
           <div>
-            <h2>13. Änderungen dieser Datenschutzerklärung</h2>
+            <h2>14. Änderungen dieser Datenschutzerklärung</h2>
             <p>Wir passen diese Datenschutzerklärung an, wenn sich Rechtslage, Website-Funktionen oder eingesetzte Dienstleister ändern.</p>
           </div>
 

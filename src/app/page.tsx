@@ -19,6 +19,9 @@ export default function Home() {
             <a href="#projects" className="quiet">
               Projects
             </a>
+            <Link href="/blog" className="quiet">
+              Blog
+            </Link>
             <Link href="/legal" className="quiet">
               Legal
             </Link>
