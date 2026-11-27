@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import Backdrop from '@/components/Backdrop'
 import Headline from '@/components/Headline'
+import NewsletterButton from '@/components/NewsletterButton'
 import Pager from '@/components/Pager'
 import Parts from '@/components/Parts'
 import Projects from '@/components/Projects'
@@ -25,6 +26,7 @@ export default function Home() {
             <Link href="/legal" className="quiet">
               Legal
             </Link>
+            <NewsletterButton />
           </nav>
         </header>
 

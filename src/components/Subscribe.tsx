@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useId, useState } from 'react'
 
 type State = { kind: 'idle' | 'sending' | 'sent' } | { kind: 'error'; message: string }
 
@@ -35,7 +35,20 @@ const text = {
 }
 
 /** Sign up for new posts by e-mail. Sends a confirmation e-mail first (double opt-in). */
-export default function Subscribe({ title, lang = 'en' }: { title?: string; lang?: 'en' | 'de' }) {
+export default function Subscribe({
+  title,
+  lang = 'en',
+  titleId,
+}: {
+  title?: string
+  lang?: 'en' | 'de'
+  /** Id for the heading, when something outside (a dialog) labels itself with it. */
+  titleId?: string
+}) {
+  const uid = useId()
+  const headingId = titleId ?? `${uid}-title`
+  const emailId = `${uid}-email`
+  const errorId = `${uid}-error`
   const [state, setState] = useState<State>({ kind: 'idle' })
   const t = text[lang]
 
@@ -59,8 +72,8 @@ export default function Subscribe({ title, lang = 'en' }: { title?: string; lang
   }
 
   return (
-    <section className="subscribe" aria-labelledby="subscribe-title">
-      <h2 id="subscribe-title" className="subscribe-title">
+    <section className="subscribe" aria-labelledby={headingId}>
+      <h2 id={headingId} className="subscribe-title">
         {title ?? t.title}
       </h2>
       {state.kind === 'sent' ? (
@@ -71,18 +84,18 @@ export default function Subscribe({ title, lang = 'en' }: { title?: string; lang
         <>
           <p className="subscribe-text">{t.lead}</p>
           <form className="subscribe-form" onSubmit={submit} noValidate>
-            <label className="sr-only" htmlFor="subscribe-email">
+            <label className="sr-only" htmlFor={emailId}>
               {t.label}
             </label>
             <input
-              id="subscribe-email"
+              id={emailId}
               name="email"
               type="email"
               autoComplete="email"
               placeholder={t.placeholder}
               required
               aria-invalid={state.kind === 'error' || undefined}
-              aria-describedby={state.kind === 'error' ? 'subscribe-error' : undefined}
+              aria-describedby={state.kind === 'error' ? errorId : undefined}
             />
             {/* Left empty by people, filled in by bots. */}
             <input className="subscribe-trap" name="website" tabIndex={-1} autoComplete="off" aria-hidden />
@@ -91,7 +104,7 @@ export default function Subscribe({ title, lang = 'en' }: { title?: string; lang
             </button>
           </form>
           {state.kind === 'error' && (
-            <p className="subscribe-error" id="subscribe-error" role="alert">
+            <p className="subscribe-error" id={errorId} role="alert">
               {state.message}
             </p>
           )}

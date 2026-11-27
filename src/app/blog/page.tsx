@@ -28,6 +28,10 @@ export default function BlogPage() {
         <h1 className="blog-title">Blog.</h1>
         <p className="blog-lead">{description}</p>
 
+        <div id="subscribe">
+          <Subscribe />
+        </div>
+
         {posts.length ? (
           <ol className="posts">
             {posts.map((p, i) => (
@@ -52,12 +56,8 @@ export default function BlogPage() {
             ))}
           </ol>
         ) : (
-          <p className="posts-empty">The first post is on its way. Subscribe below and it comes straight to you.</p>
+          <p className="posts-empty">The first post is on its way. Subscribe above and it comes straight to you.</p>
         )}
-
-        <div id="subscribe">
-          <Subscribe />
-        </div>
       </main>
     </>
   )

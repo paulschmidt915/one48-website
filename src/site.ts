@@ -31,6 +31,8 @@ export type Project = {
   status?: string
   /** Screenshots for the phone viewer ("Look inside"), apps only. */
   screens?: Screen[]
+  /** Primary button in the opened tile, e.g. to play or open the project. */
+  link?: { label: string; href: string }
 }
 
 const wip = 'WIP, to be released'
@@ -47,6 +49,14 @@ const projects: Project[] = [
       { label: 'Spotify', href: 'https://open.spotify.com/show/7qSUA2thxkiXCXmp8OUFc5' },
       '.',
     ],
+  },
+  {
+    slug: 'campus',
+    name: 'Campus Golden Hour',
+    kind: 'Browser game',
+    logo: '/projects/campus.webp',
+    text: ['Walk the WU Campus Vienna at golden hour and collect all 10 ECTS points, right in your browser.'],
+    link: { label: 'Play now', href: 'https://www.one48.de/campus/' },
   },
   {
     slug: 'insel-der-agenten',

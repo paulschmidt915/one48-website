@@ -72,9 +72,14 @@ export default function Projects({ projects }: { projects: Project[] }) {
                   <p className="tile-text rich">
                     <Parts parts={p.text} />
                   </p>
-                  {(p.status || p.screens) && (
+                  {(p.status || p.screens || p.link) && (
                     <div className="tile-foot">
                       {p.status && <p className="tile-status">{p.status}</p>}
+                      {p.link && (
+                        <a className="tile-look tile-play" href={p.link.href}>
+                          {p.link.label}
+                        </a>
+                      )}
                       {p.screens && p.screens.length > 0 && (
                         <button type="button" className="tile-look" onClick={() => setViewing(p.slug)}>
                           Look inside

@@ -348,7 +348,94 @@ html[data-pager] {
 
 .home-nav {
   display: flex;
+  align-items: center;
   gap: clamp(1.25rem, 2.4vw, 2rem);
+}
+
+/* Newsletter: the one nav item that is not quiet. Outlined pill, filled on hover. */
+.nl-button {
+  height: 2.25rem;
+  padding: 0 1.1rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-ink);
+  background: rgb(255 255 255 / 0.45);
+  box-shadow: inset 0 0 0 1.5px var(--color-ink);
+  cursor: pointer;
+  transition: background-color 0.25s ease, color 0.25s ease, transform 0.3s var(--ease-out);
+}
+@media (hover: hover) {
+  .nl-button:hover { background: var(--color-ink); color: var(--color-paper); }
+}
+.nl-button:active { opacity: 0.7; }
+/* Phones: the wordmark, three links and the pill must share one line. */
+@media (max-width: 26rem) {
+  .home-top { gap: 1rem; }
+  .home-nav { gap: 0.85rem; }
+  .nl-button { height: 2rem; padding: 0 0.8rem; font-size: 0.8125rem; }
+}
+
+/* Newsletter dialog. */
+.nl-dialog {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  padding: 1rem;
+  border: 0;
+  background: transparent;
+  color: var(--color-ink);
+  overflow: hidden;
+}
+.nl-dialog[open] { display: grid; place-items: center; }
+.nl-dialog::backdrop {
+  background: color-mix(in oklab, var(--color-paper) 72%, transparent);
+  -webkit-backdrop-filter: blur(26px) saturate(1.2);
+  backdrop-filter: blur(26px) saturate(1.2);
+}
+.nl-dialog[open],
+.nl-dialog[open]::backdrop { animation: fade-in 0.3s ease-out both; }
+.nl-card {
+  position: relative;
+  width: min(100%, 32rem);
+  max-height: 100%;
+  overflow-y: auto;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  padding-top: 3.25rem;
+  border-radius: 1.25rem;
+  background: rgb(255 255 255 / 0.78);
+  box-shadow:
+    inset 0 0 0 1px rgb(255 255 255 / 0.7),
+    0 24px 60px -24px rgb(16 19 26 / 0.35);
+  animation: nl-pop 0.45s var(--ease-out) both;
+}
+@keyframes nl-pop {
+  from { opacity: 0; transform: translate3d(0, 0.75rem, 0) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.nl-close {
+  position: absolute;
+  top: 0.9rem;
+  right: 1.25rem;
+  font-size: 0.9375rem;
+  cursor: pointer;
+}
+/* The sign-up sits bare inside the card. */
+.nl-card .subscribe {
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nl-dialog[open], .nl-dialog[open]::backdrop, .nl-card { animation: none; }
+  .nl-button { transition: none; }
 }
 
 /* ───────── Projects ───────── */
@@ -544,6 +631,16 @@ html[data-pager] .projects:not([data-seen]) :is(.home-top, .projects-title, .til
   .tile-look:hover { transform: translate3d(0, -1px, 0); }
 }
 .tile-look:active { opacity: 0.7; }
+/* The primary action of a tile: a link, a little larger and in the accent colour. */
+.tile-play {
+  display: inline-block;
+  padding: 0.38rem 0.95rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--color-ink);
+  background: #e3a72f;
+}
 
 @keyframes pulse {
   0% { box-shadow: 0 0 0 0 rgb(227 167 47 / 0.5); }
@@ -643,6 +740,7 @@ html[data-pager] .projects:not([data-seen]) :is(.home-top, .projects-title, .til
   .tile-head { display: none; }
   .tile-text { font-size: 0.8125rem; line-height: 1.38; }
   .tile-status, .tile-look { font-size: 0.6875rem; }
+  .tile-play { font-size: 0.75rem; }
 }
 
 /* ───────── Phone viewer: screenshots of an app in a phone ───────── */
@@ -1243,6 +1341,17 @@ html[data-viewer] { overflow: hidden; }
   margin-top: clamp(3.5rem, 9vw, 6rem);
   padding: clamp(1.25rem, 3vw, 2rem);
 }
+/* On the blog list it sits between the lead and the posts: compact. */
+.blog > #subscribe { margin-top: clamp(1.5rem, 3.5vw, 2.25rem); }
+.blog > #subscribe .subscribe { margin-top: 0; padding: 1rem 1.25rem 1.1rem; }
+.blog > #subscribe .subscribe-title { font-size: 1.25rem; letter-spacing: -0.025em; line-height: 1.25; font-weight: 500; }
+.blog > #subscribe .subscribe-text { margin-top: 0.25rem; font-size: 0.9375rem; }
+.blog > #subscribe .subscribe-form { margin-top: 0.8rem; }
+.blog > #subscribe .subscribe-form input,
+.blog > #subscribe .subscribe-form button { height: 2.75rem; }
+.blog > #subscribe .subscribe-fine { margin-top: 0.7rem; }
+.blog > #subscribe + .posts,
+.blog > #subscribe + .posts-empty { margin-top: 0.5rem; }
 .subscribe-title {
   font-size: clamp(1.5rem, 1.2rem + 1.4vw, 2.25rem);
   font-weight: 480;
